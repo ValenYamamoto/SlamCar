@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="sdp" name="motor_controller1" type="motorControl.py"/>
+  <node pkg="sdp" name="servo_controller1" type="servoControl.py"/>
+  <node pkg="sdp" name="pwm_controller1" type="PWMControl.py"/>
+
+</launch>

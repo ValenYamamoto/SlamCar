@@ -1,0 +1,4 @@
+int64 duty_cycle
+int32 channel
+---
+int64 error
