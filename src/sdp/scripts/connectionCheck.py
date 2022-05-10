@@ -5,7 +5,7 @@ import platform
 import subprocess
 from std_msgs.msg import Int32
 
-CONTROLLING_HOST = None
+CONTROLLING_HOST = "192.168.0.240" 
 NUM_CON_HOSTS = None
 PING_DELAY = 1  #check if this can be a decimal
 PING_TIMEOUT = 1 
@@ -36,8 +36,10 @@ def init():
     global INIT_SUCCESSFUL_FLAG, CONTROLLING_HOST
     CONTROLLING_HOST = get_host_ip()
     if CONTROLLING_HOST == None:
+        print("COULD NOT FIND CONTROLLING HOST")
         INIT_SUCCESSFUL_FLAG = False
     else:
+        print(f"FOUND CONTROLLING HOST @ {CONTROLLING_HOST}")
         INIT_SUCCESSFUL_FLAG = True
     
 
@@ -50,8 +52,10 @@ def talker():
         if INIT_SUCCESSFUL_FLAG:
             ping_res = ping(CONTROLLING_HOST, PING_TIMEOUT)
             if ping_res == True:
+                print("PING SUCCESSFUL")
                 pub.publish(CONNECTED_STATUS)
             else:
+                print("PING NO REPLY :(")
                 pub.publish(DISCONNECTED_STATUS)
         else:
             pub.publish(BAD_INIT_STATUS)
