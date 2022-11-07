@@ -36,9 +36,10 @@ def handle_motor_control_request(req):
         else:
             print("Could not set motors, values OOB")
             return MotorDataResponse(3)
-    else:
-        pwm_dc = speed_percent_to_duty_cycle(0)
-        err = pwm_control_client(pwm_dc, MOTOR_CHANNEL)
+    print("locked")
+    pwm_dc = speed_percent_to_duty_cycle(0)
+    err = pwm_control_client(pwm_dc, MOTOR_CHANNEL)
+    return MotorDataResponse(err)
 
 def speed_percent_to_duty_cycle(speed):
     dc = MIN_SPD_DC - (speed * SPD_TO_DC_SCALE)
