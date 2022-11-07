@@ -14,7 +14,8 @@ MAX_SPD = 100
 MIN_SPD = 0
 NODE_NAME = "Motor_controller"
 
-SPD_TO_DC_SCALE = None
+# SPD_TO_DC_SCALE = None
+SPD_TO_DC_SCALE = (MIN_SPD_DC - MAX_SPD_DC)/MAX_SPD
 
 locked = True
 

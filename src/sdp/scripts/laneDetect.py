@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 import filters
+import gpu_instance as gi
 
 
 windowName = 'image'
@@ -222,6 +223,7 @@ def modelTest2(img):
     #return [None, edges]
 
     lines = cv2.HoughLines(edges,resolutionRho,resolutionTheta,threshold)
+    print(lines)
 
     if(np.any(lines)):
         lines = convertPolarToCartesian(lines)
@@ -242,6 +244,75 @@ def modelTest2(img):
         
         angle = data[0]
         angle = filters.maxChangeFilter(angle, 25)
+        displayHeadingLine(img, data[0])
+        return [angle, img]
+    
+    else:
+        return [None, img] 
+
+
+gpu = gi.gpu_instance(rho=1.9, theta=0.01837, hough_th=99, canny_threshold1=57, canny_threshold2=144, aperature=3)
+
+def modelTest2gpu(img):
+    alpha=0.6
+    beta=0.4
+    contrastAdjustThreshold=127
+    resolutionRho=1.9
+    resolutionTheta=0.01837 #more processing thoq
+    threshold=99
+    ksize=7
+    cannyFirstThreshold=57
+    cannySecondThreshold=144
+    rectTopMaskHeight=90
+    rectBottomMaskHeight=640
+
+    start = time.time()
+
+    edges = img.copy() 
+
+    edges = applyGaussianBlur(edges, ksize)
+
+    edges = cv2.cvtColor(edges, cv2.COLOR_BGR2GRAY)
+    #check that this works here
+    edges = rectTopDownMask(edges, rectTopMaskHeight)
+    print("START GPU")
+    print("MY LINES HERE")
+    cuC1 = cv2.cuda_GpuMat()
+    cuC1.upload(edges)
+    detector = cv2.cuda.createCannyEdgeDetector(cannyFirstThreshold, cannySecondThreshold)
+    detector.detect(cuC1)
+    #detector = cv2.cuda.createHoughLinesDetector(3, np.pi / 180, 20)
+    #detector.detect(cuC1)
+    lines = cuC1.download()
+    print(lines)
+    return [None, lines]
+    print("FINISH GPU")
+    #edges = cv2.Canny(edges, cannyFirstThreshold,cannySecondThreshold)
+    
+
+    #lines = cv2.HoughLines(edges,resolutionRho,resolutionTheta,threshold)
+
+    if(np.any(lines)):
+        print("MY ERROR LIES HERE")
+        lines = convertPolarToCartesian(lines)
+        print("MY ERROR LIES ABOVE HERE")
+
+        #drawHoughLines2(img, lines)
+
+        lanes = average(img, lines)
+
+        data = findSteeringAngle(img, lanes, drawMidLines=True)
+
+        drawAverageLines(img, lanes)
+
+        elapsed = time.time() - start
+        elapsed = elapsed * 1000
+        fps = 1000/elapsed
+        cv2.putText(img, "fps: " + str(round(fps, 1)), (0, 75), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 2)
+        cv2.putText(img, "ms: " + str(round(elapsed, 1)), (0, 50), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
+        
+        angle = data[0]
+        #angle = filters.maxChangeFilter(angle, 25)
         displayHeadingLine(img, data[0])
         return [angle, img]
     

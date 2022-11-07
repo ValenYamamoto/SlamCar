@@ -3,8 +3,9 @@ import gi
 import laneDetect 
 import numpy as np
 import sys
-from f1tenth_simulator.srv import *
+from sdp.srv import *
 import rospy
+import gpu_instance
 
 INPUT_FRAMERATE = 10 #This gets used by gst preprocessing and the rtsp server 
 
