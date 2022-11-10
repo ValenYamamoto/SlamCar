@@ -2,6 +2,7 @@ from typing import List, Tuple
 import math
 import numpy as np
 import yaml
+import rospy
 
 
 class Landmark:
@@ -21,7 +22,7 @@ class Particle:
 
     def __init__(self, ctx, x=0.0, y=0.0, theta=0.0):
         self.importance_weight = 1.0 / ctx["N_PARTICLES"]
-        self.old_weight = 0
+        self.old_weight = 1.0 / ctx["N_PARTICLES"]
         self.pos = np.array([[x], [y], [theta]])
         self.ctx = ctx
 
@@ -186,3 +187,13 @@ def print_particles(particles):
     iw = calculate_importance_weight_mc(particles)
     print(f"MC Est: {mc} IW Est: {iw}")
     
+
+def log_particles(particles):
+    for i, particle in enumerate(particles):
+        rospy.loginfo(
+            f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
+        )
+
+    mc = calculate_mc_estimate(particles)
+    iw = calculate_importance_weight_mc(particles)
+    rospy.loginfo(f"MC Est: {mc} IW Est: {iw}")

@@ -2,13 +2,6 @@ import math
 import numpy as np
 from typing import List, Tuple, Callable
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
-from matplotlib.lines import Line2D
-
-# import IPython
-# from ipywidgets import *
-
 from utils import Particle, ParametricLine, get_intersection_with_map, Landmark, pi_2_pi
 
 

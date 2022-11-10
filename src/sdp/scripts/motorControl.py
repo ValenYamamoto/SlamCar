@@ -17,7 +17,7 @@ NODE_NAME = "Motor_controller"
 # SPD_TO_DC_SCALE = None
 SPD_TO_DC_SCALE = (MIN_SPD_DC - MAX_SPD_DC)/MAX_SPD
 
-locked = True
+locked = False
 
 def handle_motor_control_request(req):
     if locked == False:

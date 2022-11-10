@@ -34,7 +34,7 @@ def sigint_handler(signum, frame):
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)
     print("Starting Motors")
-    err = motor_control_client(20, 0)
+    err = motor_control_client(10, 0)
     rospy.sleep(5)
     print("Stopping Motors")
     err = motor_control_client(0, 0)

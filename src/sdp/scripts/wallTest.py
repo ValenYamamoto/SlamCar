@@ -1,8 +1,8 @@
+#!/usr/bin/python3
 from __future__ import print_function
 
 import sys
 import rospy
-import getch
 from sdp.srv import *
 
 import board
@@ -12,7 +12,7 @@ import argparse
 import numpy as np
 
 from slam import FastSLAM, SLAMContext, motion_model
-from utils import Particle, ParametricLine, read_yaml_file, print_particles
+from utils import Particle, ParametricLine, read_yaml_file, log_particles
 
 MAX_ANGLE = 180 
 MIN_ANGLE = 0
@@ -44,6 +44,10 @@ def motor_control_client(s, rev):
     except rospy.ServiceException as e:
         print("Service call failed: %s"%e)
 
+def noise_function(self):
+    a = (np.random.randn(1, 2) @ self.ctx["R"]).T
+    a[1,0] = 0
+    return a
 
 def wall_generator(wall_distance):
     return [ParametricLine(np.array([[wall_distance],[-1]]), np.array([[0], [1]]))]
@@ -76,19 +80,20 @@ def get_range(vl53):
     return total / 3
 
 if __name__ == "__main__":
+    rospy.init_node("WallTest")
     i2c = board.I2C()
     vl53 = adafruit_vl53l4cd.VL53L4CD(i2c)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-y", "--yaml", default="")
-    args = parser.parse_args()
+    #parser = argparse.ArgumentParser()
+    #parser.add_argument("-y", "--yaml", default="")
+    #args = parser.parse_args()
 
     x = 0
     y = 0
     theta = 0
 
-    if args.yaml: 
-        params_dict = read_yaml_file(args.yaml)
+    if True: 
+        params_dict = read_yaml_file("/home/sdp10/catkin_ws/src/sdp/scripts/params.yaml")
         ctx = SLAMContext.init_from_dict(params_dict)
         if 'x' in params_dict:
             x = params_dict['x']
@@ -109,18 +114,23 @@ if __name__ == "__main__":
     setattr(FastSLAM, 'generate_noise', noise_function)
 
     obs_generator = get_observation(WALL_DISTANCE - x)
-    print_particles(fastSlam.particles)
+    log_particles(fastSlam.particles)
+    rospy.loginfo("READY")
 
-    z = get_range() 
-    #r = rospy.Rate(10) # in hz
+    z = get_range(vl53) 
+    r = rospy.Rate(2) # in hz
+    input("press to begin")
     while True:
-        z = next(obs_generator) 
+        z = get_range(vl53) 
+        rospy.loginfo(f"Z {z}")
+        z = np.array([[z],[0], [0]])
         fastSlam.run(0, z)
         if z[0,0] < 10 or abs(z[0,0] - 10) < 1:
             break
-        print_particles(fastSlam.particles)
+        log_particles(fastSlam.particles)
         err = motor_control_client(10, 0)
-        #r.sleep()
-        input()
+        rospy.loginfo("moving motors")
+        r.sleep()
     err = motor_control_client(0, 0)
-    print_particles(fastSlam.particles)
+    rospy.loginfo("Stopping motors")
+    log_particles(fastSlam.particles)
