@@ -13,6 +13,7 @@ import numpy as np
 
 from slam import FastSLAM, SLAMContext, motion_model
 from utils import Particle, ParametricLine, read_yaml_file, log_particles
+from drawer import Drawer
 
 MAX_ANGLE = 180 
 MIN_ANGLE = 0
@@ -50,7 +51,7 @@ def noise_function(self):
     return a
 
 def wall_generator(wall_distance):
-    return [ParametricLine(np.array([[wall_distance],[-1]]), np.array([[0], [1]]))]
+    return [ParametricLine(np.array([[wall_distance],[-5]]), np.array([[0], [10]]))]
 
 def get_observation(wall_distance):
     obs = wall_distance
@@ -111,6 +112,9 @@ if __name__ == "__main__":
 
     fastSlam = FastSLAM(ctx, x, y, theta, motion_model, map_lines)
     fastSlam.particles = particles
+    drawer = Drawer(ctx, fastSlam, [0, 101], [-5, 5], map_lines, [])
+    drawer.draw()
+    drawer.save_image('status_out.png')
     setattr(FastSLAM, 'generate_noise', noise_function)
 
     obs_generator = get_observation(WALL_DISTANCE - x)
@@ -118,19 +122,24 @@ if __name__ == "__main__":
     rospy.loginfo("READY")
 
     z = get_range(vl53) 
-    r = rospy.Rate(2) # in hz
+    r = rospy.Rate(1) # in hz
     input("press to begin")
     while True:
         z = get_range(vl53) 
+        print("ranged")
         rospy.loginfo(f"Z {z}")
         z = np.array([[z],[0], [0]])
         fastSlam.run(0, z)
         if z[0,0] < 10 or abs(z[0,0] - 10) < 1:
             break
         log_particles(fastSlam.particles)
+        drawer.draw()
+        drawer.save_image('status_out.png')
         err = motor_control_client(10, 0)
         rospy.loginfo("moving motors")
         r.sleep()
+    drawer.draw()
+    drawer.save_image('status_out.png')
     err = motor_control_client(0, 0)
     rospy.loginfo("Stopping motors")
     log_particles(fastSlam.particles)
