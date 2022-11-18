@@ -1,0 +1,4 @@
+int32 inter_measurement
+int32 timing_budget
+---
+int8 err

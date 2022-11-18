@@ -67,6 +67,9 @@ add_service_files(
 	MotorData.srv
 	ServoData.srv
 	PWMControllerData.srv
+	DistanceData.srv
+	ConfigSensors.srv
+	StartSensors.srv
 )
 ## Generate actions in the 'action' folder
 # add_action_files(
