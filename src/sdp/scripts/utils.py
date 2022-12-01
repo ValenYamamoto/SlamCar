@@ -197,3 +197,6 @@ def log_particles(particles):
     mc = calculate_mc_estimate(particles)
     iw = calculate_importance_weight_mc(particles)
     rospy.loginfo(f"MC Est: {mc} IW Est: {iw}")
+
+def scale_servo_angle(angle):
+    return (angle + math.pi) / (2 * math.pi) * 180

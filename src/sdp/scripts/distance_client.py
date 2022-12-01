@@ -1,21 +1,36 @@
+#!/usr/bin/python3
 import rospy
 from sdp.srv import *
 
-def motor_control_client(x):
+def sensor_client():
     rospy.wait_for_service('tof_readings')
     try:
-        mc = rospy.ServiceProxy('motor_control_srv', MotorData)
-        resp1 = mc(x)
-        return resp1.error
+        sc = rospy.ServiceProxy('tof_readings', DistanceData)
+        resp1 = sc()
+        return resp1.sensor_data
     except rospy.ServiceException as e:
         print("Service call failed: %s"%e)
 
 
 if __name__ == "__main__":
     print("Starting Client...")
-    if len(sys.argv) == 2:
-        x = int(sys.argv[1])
-    else:
-        print(usage())
-        sys.exit(1)
-    print("%s = %s"%(x, motor_control_client(x)))
+    rospy.init_node("sensor_client")
+    try:
+        sc = rospy.ServiceProxy('tof_start', StartSensors)
+        resp1 = sc(True)
+        if resp1.err:
+            print("init error")
+            exit(1)
+    except rospy.ServiceException as e:
+        print("init exception")
+        exit(1)
+
+    #r = rospy.Rate(0.25)
+    while True:
+        data = sensor_client()
+        s = ""
+        for i in range(6):
+            s += f"{data[i]:.2f} "
+        rospy.loginfo(s)
+        #r.sleep()
+        input()

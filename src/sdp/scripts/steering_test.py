@@ -3,7 +3,6 @@ from __future__ import print_function
 
 import sys
 import rospy
-import getch
 from sdp.srv import *
 
 MAX_ANGLE = 180 #TODO: Check if these are updated
@@ -44,7 +43,7 @@ if __name__ == "__main__":
     err = servo_control_client(90, SERVO_CHANNEL)
     input("Press enter to continue")
     while True:
-        a = float(input())
-        err = servo_control_client(90, SERVO_CHANNEL)
+        a = int(input())
+        err = servo_control_client(a, SERVO_CHANNEL)
 
 

@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from sdp.srv import (
     DistanceData, 
     DistanceDataResponse, 
@@ -20,10 +21,12 @@ tof = None
 
 def handle_reading_request(req):
     global tof
+    if tof is None:
+        return DistanceDataResponse([0, 0, 0, 0, 0, 0], 1)
     if RANGING:
         readings = get_readings(tof)
-        return DistanceData(0, readings)
-    return DistanceData(1, [0, 0, 0, 0, 0, 0])
+        return DistanceDataResponse(readings, 0)
+    return DistanceDataResponse([0, 0, 0, 0, 0, 0], 0)
 
 def handle_start_request(req):
     global RANGING, tof
@@ -33,12 +36,12 @@ def handle_start_request(req):
     else:
         stop_ranging(tof)
         RANGING = False
-    return StartSensors(0)
+    return StartSensorsResponse(0)
 
 def handle_config_request(req):
     global tof
-    set_sensor_parameters(tof, reg.inter_measurement, req.timing_budget):
-    return ConfigSensors(0)
+    set_sensor_parameters(tof, reg.inter_measurement, req.timing_budget)
+    return ConfigSensorsResponse(0)
 
 def init_sensors():
     i2c = busio.I2C(SCL, SDA)
@@ -71,17 +74,30 @@ def stop_ranging(tof):
 
 def get_readings(tof):
     data = [0] * len(tof)
+    for i in range(len(tof)):
+        tof[i].clear_interrupt()
+        tof[i].distance
     for i, sensor in enumerate(tof):
+        while not sensor.data_ready:
+            continue
         sensor.clear_interrupt()
-        data[i] = sensor.data
+        data[i] = sensor.distance
+    for i in range(3):
+        for i, sensor in enumerate(tof):
+            while not sensor.data_ready:
+                continue
+            sensor.clear_interrupt()
+            data[i] = 0.1 * data[i] + 0.9 * sensor.distance
     return data
 
 def run_sensor_node():  
     global tof
 
-    rospy.init("ToFNode")
+    rospy.init_node("ToFNode")
 
+    rospy.loginfo("Initializing Sensors")
     tof = init_sensors()
+    rospy.loginfo("Finished Initializing Sensors")
         
     reading = rospy.Service('tof_readings', DistanceData, handle_reading_request)
     start = rospy.Service('tof_start', StartSensors, handle_start_request)

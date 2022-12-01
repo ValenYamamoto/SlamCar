@@ -69,6 +69,7 @@ def motor_control_server():
     rospy.Subscriber('checkDisconnect', Int32, handle_connection_update)
 
     print(NODE_NAME + "is ready to recieve motor control commands")
+    err = pwm_control_client(0, MOTOR_CHANNEL)
     rospy.spin()
 
 def pwm_control_client(dc, ch):
