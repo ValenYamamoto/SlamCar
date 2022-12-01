@@ -2,7 +2,11 @@ from typing import List, Tuple
 import math
 import numpy as np
 import yaml
-import rospy
+import socket
+
+isJetson = not socket.gethostname().startswith("DESK")
+if isJetson:
+    import rospy
 
 
 class Landmark:
@@ -175,6 +179,9 @@ def pi_2_pi(angle: float) -> float:
 def read_yaml_file(filename):
     with open(filename) as f:
         params_dict = yaml.safe_load(f)
+    if "ANGLES" in params_dict:
+        for i in range(len(params_dict["ANGLES"])):
+            params_dict["ANGLES"][i] = np.deg2rad(params_dict["ANGLES"][i])
     return params_dict
 
 def print_particles(particles):
@@ -189,14 +196,22 @@ def print_particles(particles):
     
 
 def log_particles(particles):
-    for i, particle in enumerate(particles):
-        rospy.loginfo(
-            f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
-        )
-
+    global isJetson
     mc = calculate_mc_estimate(particles)
     iw = calculate_importance_weight_mc(particles)
-    rospy.loginfo(f"MC Est: {mc} IW Est: {iw}")
+    if isJetson:
+        for i, particle in enumerate(particles):
+            rospy.loginfo(
+                f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
+            )
+        rospy.loginfo(f"MC Est: {mc} IW Est: {iw}")
+    else:
+        for i, particle in enumerate(particles):
+            print(
+                f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
+            )
+        print(f"MC Est: {mc} IW Est: {iw}")
+
 
 def scale_servo_angle(angle):
     return (angle + math.pi) / (2 * math.pi) * 180

@@ -1,7 +1,6 @@
 from flask import Response, Flask
 import numpy as np
 import cv2
-import jetson.utils
 import sys
 
 
@@ -9,7 +8,7 @@ app = Flask( __name__ )
 
 def encode_video():
     while True:
-        image = cv2.imread('/home/sdp10/catkin_ws/src/sdp/scripts/status_out.png', 0)
+        image = cv2.imread('status_out.png')
         if image is None:
             continue
         return_key, encoded = cv2.imencode( ".jpg", image )

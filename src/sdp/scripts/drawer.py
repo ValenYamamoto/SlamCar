@@ -21,6 +21,7 @@ class Drawer:
         self.fastSlam = fastSLAM
         self.xrange = xrange
         self.yrange = yrange
+        self.pos = None
 
     def draw(self):
         self.draw_map()
@@ -66,7 +67,7 @@ class Drawer:
             plt.plot([x1[0, 0], x2[0, 0]], [x1[1, 0], x2[1, 0]], c=color)
 
     def draw_observations(self, observations, color):
-        p = self.pos.pos[:2, :].reshape(2, 1)
+        p = self.pos[:2, :].reshape(2, 1)
         lines = []
         for i in range(observations.shape[1]):
             r, theta = observations[0, i], observations[1, i]
@@ -84,3 +85,6 @@ class Drawer:
     def save_image(self, filename):
         plt.savefig(filename)
         plt.clf()
+
+    def update_true_position(self, pos):
+        self.pos = pos
