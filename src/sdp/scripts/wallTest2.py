@@ -65,7 +65,7 @@ def noise_function(self):
     return a
 
 def wall_generator(wall_distance):
-    return [ParametricLine(np.array([[wall_distance],[-50]]), np.array([[0], [100]]))]
+    return [ParametricLine(np.array([[wall_distance],[-10.31875]]), np.array([[0], [20.31875]]))]
 
 def get_observation(ctx, wall_distance, map_lines, drawer):
     obs = wall_distance
