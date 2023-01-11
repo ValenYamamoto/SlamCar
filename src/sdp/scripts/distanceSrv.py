@@ -80,14 +80,16 @@ def get_readings(tof):
     for i, sensor in enumerate(tof):
         while not sensor.data_ready:
             continue
-        sensor.clear_interrupt()
         data[i] = sensor.distance
+        sensor.clear_interrupt()
+        #data[i] = sensor.distance
+    return data
     for i in range(3):
         for i, sensor in enumerate(tof):
             while not sensor.data_ready:
                 continue
-            sensor.clear_interrupt()
             data[i] = 0.1 * data[i] + 0.9 * sensor.distance
+            sensor.clear_interrupt()
     return data
 
 def run_sensor_node():  

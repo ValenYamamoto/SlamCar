@@ -1,10 +1,14 @@
 #!/usr/bin/env python
+"""
+To Test for Motor PWM Values, uses command line arguments
+"""
 
 from __future__ import print_function
 
 from sdp.srv import MotorDataResponse, MotorData, PWMControllerData, PWMControllerDataResponse
 import rospy
 from std_msgs.msg import Int32
+import argparse
 
 
 MAX_SPD_DC = 2900
@@ -84,4 +88,18 @@ def pwm_control_client(dc, ch):
 
 
 if __name__ == "__main__":
-    motor_control_server()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("value", type=float)
+    parser.add_argument("--pwm", action="store_true")
+    args = parser.parse_args()
+    global SPD_TO_DC_SCALE
+    rospy.init_node(NODE_NAME)
+    SPD_TO_DC_SCALE = (MIN_SPD_DC - MAX_SPD_DC)/MAX_SPD
+    if args.pwm:
+        err = pwm_control_client(int(args.value), MOTOR_CHANNEL)
+        print("PWM value", int(args.value))
+    else:
+        pwm_dc = speed_percent_to_duty_cycle(args.value)
+        err = pwm_control_client(pwm_dc, MOTOR_CHANNEL)
+        print("Speed convert", pwm_dc)
+

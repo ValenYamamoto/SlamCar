@@ -1,3 +1,9 @@
-build
-devel
 .catkin_workspace
+build/
+devel/
+src/sdp/scripts/__pycache__/
+src/sdp/scripts/canny_hough_cuda_vid.py
+src/sdp/scripts/davidStreamGPU.py
+src/sdp/scripts/gpu_instance.py
+src/sdp/scripts/status_out.png
+src/sdp/scripts/veryBasicCudaExample.py
