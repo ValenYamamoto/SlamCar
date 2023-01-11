@@ -15,8 +15,8 @@ tof = None
 def init_sensors():
     i2c = busio.I2C(SCL, SDA)
     mux = adafruit_tca9548a.TCA9548A(i2c)
-    #mux_pos_list = [4,3,2,1,0,5]
-    mux_pos_list = [5]
+    mux_pos_list = [4,3,2,1,0,5]
+    #mux_pos_list = [5]
     tof_sensors = []
     for mux_pos_index in mux_pos_list:
         print(f"Trying to init {mux_pos_index}")
@@ -79,7 +79,6 @@ def run_sensor_node():
     rate = rospy.Rate(2)
     while not rospy.is_shutdown():
         reading = get_readings(tof)
-        reading = [reading[0], 0., 0., 0., 0., 0.]
         pub.publish(reading)
         rate.sleep()
         
