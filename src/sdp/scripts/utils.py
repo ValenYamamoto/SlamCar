@@ -4,10 +4,21 @@ import numpy as np
 import yaml
 import socket
 
+from sdp.srv import *
+
 isJetson = not socket.gethostname().startswith("DESK")
 if isJetson:
     import rospy
 
+MAX_ANGLE = 180 
+MIN_ANGLE = 0
+ANGLE_STEP = 18
+
+MAX_SPD = 100
+MIN_SPD = 0
+SPD_STEP = 5
+
+SERVO_CHANNEL = 15
 
 class Landmark:
     def __init__(self):
@@ -224,11 +235,37 @@ def scale_servo_angle(angle):
 def create_observations(ctx, sensor_data):
     distance = []
     angles = []
+    landmark = []
     for data, angle in zip(sensor_data, ctx["ANGLES"]):
         if data == -1:
             continue
         else:
             distance.append(data)
-            angles.append(data)
-    return np.array([data, angles])
-            
+            angles.append(angle)
+            landmark.append(0) # hardcode for now
+    return np.array([distance, angles, landmark])
+
+def servo_control_client(a, ch):
+    global isJetson
+    if not isJetson:
+        return 0
+    rospy.wait_for_service('servo_control_srv')
+    try:
+        servo_control_req = rospy.ServiceProxy('servo_control_srv', ServoData)
+        # servo_control_req = f1tenth_simulator.srv.
+        servo_control_resp = servo_control_req(angle=a)
+        return servo_control_resp.error
+    except rospy.ServiceException as e:
+        print("Service call failed: %s"%e)
+
+def motor_control_client(s, rev):
+    global isJetson
+    if not isJetson:
+        return 0
+    rospy.wait_for_service('motor_control_srv')
+    try:
+        motor_control_req = rospy.ServiceProxy('motor_control_srv', MotorData)
+        motor_control_resp = motor_control_req(speed_percent=s, is_reverse=rev)
+        return motor_control_resp.error
+    except rospy.ServiceException as e:
+        print("Service call failed: %s"%e)
