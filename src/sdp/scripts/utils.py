@@ -4,11 +4,11 @@ import numpy as np
 import yaml
 import socket
 
-from sdp.srv import *
 
 isJetson = not socket.gethostname().startswith("DESK")
 if isJetson:
     import rospy
+    from sdp.srv import *
 
 MAX_ANGLE = 180 
 MIN_ANGLE = 0
@@ -19,6 +19,9 @@ MIN_SPD = 0
 SPD_STEP = 5
 
 SERVO_CHANNEL = 15
+
+HOST = '127.0.0.1'
+PORT = 65432
 
 class Landmark:
     def __init__(self):
@@ -206,7 +209,7 @@ def print_particles(particles):
     print(f"MC Est: {mc} IW Est: {iw}")
     
 
-def log_particles(particles):
+def log_particles(particles, socket=False):
     global isJetson
     mc = calculate_mc_estimate(particles)
     iw = calculate_importance_weight_mc(particles)
@@ -222,6 +225,8 @@ def log_particles(particles):
                 f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
             )
         print(f"MC Est: {mc} IW Est: {iw}")
+    if socket:
+        socket.send(create_particle_string(particles))
 
 def create_particle_string(particles):
     s = ''
