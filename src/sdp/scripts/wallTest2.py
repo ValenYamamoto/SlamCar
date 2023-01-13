@@ -55,7 +55,7 @@ def noise_function(self):
     return a
 
 def wall_generator(wall_distance):
-    return [ParametricLine(np.array([[wall_distance],[-10.31875]]), np.array([[0], [20.31875]]))]
+    return [ParametricLine(np.array([[wall_distance],[-32]]), np.array([[0], [64]]))]
 
 def get_observation(ctx, wall_distance, map_lines):
     obs = wall_distance
@@ -171,7 +171,8 @@ if __name__ == "__main__":
         err = motor_control_client(10, 0)
         loginfo("moving motors")
         if isJetson:
-            r.sleep()
+            input("press to continue")
+            #r.sleep()
         else:
             input("press to continue")
     err = motor_control_client(0, 0)
