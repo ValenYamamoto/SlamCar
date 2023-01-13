@@ -220,3 +220,15 @@ def create_particle_string(particles):
         
 def scale_servo_angle(angle):
     return (angle + math.pi) / (2 * math.pi) * 180
+
+def create_observations(ctx, sensor_data):
+    distance = []
+    angles = []
+    for data, angle in zip(sensor_data, ctx["ANGLES"]):
+        if data == -1:
+            continue
+        else:
+            distance.append(data)
+            angles.append(data)
+    return np.array([data, angles])
+            
