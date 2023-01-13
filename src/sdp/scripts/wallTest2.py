@@ -8,7 +8,7 @@ import numpy as np
 
 from slam import FastSLAM, SLAMContext, motion_model
 from utils import Particle, ParametricLine, read_yaml_file, log_particles, get_intersection_with_map
-from drawer import Drawer
+#from drawer import Drawer
 
 isJetson = not socket.gethostname().startswith("DESK")
 
@@ -78,10 +78,9 @@ def get_observation(ctx, wall_distance, map_lines, drawer):
         )
         for angle in ctx["ANGLES"]
     ]
-    print("SLOPES", slopes)
     while True:
         lines = [ParametricLine(np.array([[wall_distance], [0]]), slope) for slope in slopes]
-        drawer.draw_lines(lines, 'g')
+        #drawer.draw_lines(lines, 'g')
         line_intersects = []
         z_map = []
         print("WALL DIST:", wall_distance)
@@ -164,12 +163,12 @@ if __name__ == "__main__":
 
     fastSlam = FastSLAM(ctx, x, y, theta, motion_model, map_lines)
     fastSlam.particles = particles
-    drawer = Drawer(ctx, fastSlam, [0, 101], [-5, 5], map_lines, [])
-    drawer.draw()
-    drawer.save_image('status_out.png')
+    #drawer = Drawer(ctx, fastSlam, [0, 101], [-5, 5], map_lines, [])
+    #drawer.draw()
+    #drawer.save_image('status_out.png')
     setattr(FastSLAM, 'generate_noise', noise_function)
 
-    obs_generator = get_observation(ctx, x, map_lines, drawer)
+    obs_generator = get_observation(ctx, x, map_lines, None)
     log_particles(fastSlam.particles)
     loginfo("READY")
 
@@ -183,16 +182,16 @@ if __name__ == "__main__":
         if z.size > 0 and (np.any(z[0,:] < 10) or np.any(abs(z[0,:] - 10) < 1)):
             break
         log_particles(fastSlam.particles)
-        drawer.draw()
-        drawer.save_image('status_out.png')
+        #drawer.draw()
+        #drawer.save_image('status_out.png')
         err = motor_control_client(10, 0)
         loginfo("moving motors")
         if isJetson:
             r.sleep()
         else:
             input("press to continue")
-    drawer.draw()
-    drawer.save_image('status_out.png')
+    #drawer.draw()
+    #drawer.save_image('status_out.png')
     err = motor_control_client(0, 0)
     loginfo("Stopping motors")
     log_particles(fastSlam.particles)

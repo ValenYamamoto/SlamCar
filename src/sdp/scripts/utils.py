@@ -212,6 +212,11 @@ def log_particles(particles):
             )
         print(f"MC Est: {mc} IW Est: {iw}")
 
-
+def create_particle_string(particles):
+    s = ''
+    for particle in particles:
+        s += f"{particle.x():6.2f} {particle.y():6.2f} {particle.old_weight:6.2f}\r\n"
+    return s
+        
 def scale_servo_angle(angle):
     return (angle + math.pi) / (2 * math.pi) * 180
