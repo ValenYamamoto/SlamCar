@@ -7,8 +7,8 @@ from utils import Particle, ParametricLine, get_intersection_with_map, Landmark,
 
 class SLAMContext:
     constants = {
-        "Q": np.diag([3.0, np.deg2rad(10.0)]) ** 2,
-        "R": np.diag([1.0, np.deg2rad(20.0)]) ** 2,
+        "Q": np.diag([3.0, np.deg2rad(0.75)]) ** 2,
+        "R": np.diag([1.0, np.deg2rad(0.5)]) ** 2,
         "DELTA": 1,
         "N_PARTICLES": 20,
         "N_LANDMARKS": 2,

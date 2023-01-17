@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Tuple
 import math
 import numpy as np
@@ -5,8 +6,9 @@ import yaml
 import socket
 
 
-isJetson = not socket.gethostname().startswith("DESK")
+isJetson = not (socket.gethostname().startswith("DESK") or socket.gethostname().startswith("LAP"))
 if isJetson:
+    print("Utils on Jetson")
     import rospy
     from sdp.srv import *
 
@@ -22,6 +24,12 @@ SERVO_CHANNEL = 15
 
 HOST = '127.0.0.1'
 PORT = 65432
+
+class Moves(Enum):
+    FORWARD = 1
+    BACKWARD = 2
+    LEFT = 3
+    RIGHT = 4
 
 class Landmark:
     def __init__(self):
@@ -196,7 +204,26 @@ def read_yaml_file(filename):
     if "ANGLES" in params_dict:
         for i in range(len(params_dict["ANGLES"])):
             params_dict["ANGLES"][i] = np.deg2rad(params_dict["ANGLES"][i])
+    if "MOVES" in params_dict:
+        print(params_dict["MOVES"])
+        for i, v in enumerate(params_dict["MOVES"]):
+            if v == "FORWARD":
+                params_dict["MOVES"][i] = Moves.FORWARD
+            elif v == "BACKWARD":
+                params_dict["MOVES"][i] = Moves.BACKWARD
+            elif v == "LEFT":
+                params_dict["MOVES"][i] = Moves.LEFT
+            elif v == "RIGHT":
+                params_dict["MOVES"][i] = Moves.RIGHT
+    if "INITIAL_POS" in params_dict:
+        params_dict["INITIAL_POS"][2] = np.deg2rad(params_dict["INITIAL_POS"][2])
     return params_dict
+
+def generate_wall_lines(ctx):
+    assert "WALLS_X" in ctx and "WALLS_Y" in ctx
+    for i in range(len(ctx["WALLS_X"])-1):
+        line = ParametricLine()
+        # TODO
 
 def print_particles(particles):
     for i, particle in enumerate(particles):
