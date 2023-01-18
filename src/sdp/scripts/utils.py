@@ -8,7 +8,6 @@ import socket
 
 isJetson = not (socket.gethostname().startswith("DESK") or socket.gethostname().startswith("LAP"))
 if isJetson:
-    print("Utils on Jetson")
     import rospy
     from sdp.srv import *
 
@@ -205,7 +204,6 @@ def read_yaml_file(filename):
         for i in range(len(params_dict["ANGLES"])):
             params_dict["ANGLES"][i] = np.deg2rad(params_dict["ANGLES"][i])
     if "MOVES" in params_dict:
-        print(params_dict["MOVES"])
         for i, v in enumerate(params_dict["MOVES"]):
             if v == "FORWARD":
                 params_dict["MOVES"][i] = Moves.FORWARD
@@ -215,15 +213,38 @@ def read_yaml_file(filename):
                 params_dict["MOVES"][i] = Moves.LEFT
             elif v == "RIGHT":
                 params_dict["MOVES"][i] = Moves.RIGHT
-    if "INITIAL_POS" in params_dict:
-        params_dict["INITIAL_POS"][2] = np.deg2rad(params_dict["INITIAL_POS"][2])
+    if 'theta' in params_dict:
+        params_dict['theta'] = np.deg2rad(params_dict['theta'])
     return params_dict
 
 def generate_wall_lines(ctx):
-    assert "WALLS_X" in ctx and "WALLS_Y" in ctx
+    #assert "WALLS_X" in ctx and "WALLS_Y" in ctx
+    walls = []
     for i in range(len(ctx["WALLS_X"])-1):
-        line = ParametricLine()
-        # TODO
+        start = np.array([[ctx["WALLS_X"][i]], [ctx["WALLS_Y"][i]]])
+        slope = np.array([[ctx["WALLS_X"][i+1]], [ctx["WALLS_Y"][i+1]]]) - start
+
+        walls.append(ParametricLine(start, slope))
+    return walls
+
+def generate_spread_particles(ctx):
+    initial_orientation = ctx["theta"]
+    if len(ctx["WALLS_X"]) == 2:
+        x_low, x_high = 0, np.max(ctx["WALLS_X"])-1
+        x = np.linspace(x_low, x_high, ctx["N_PARTICLES"])
+        y = ctx['y']
+        particles = []
+        for i in range(len(x)):
+            particles.append(Particle(ctx, x[i], y, initial_orientation))
+        return particles
+    x_low, x_high = np.min(ctx["WALLS_X"])+1, np.max(ctx["WALLS_X"])-1
+    y_low, y_high = np.min(ctx["WALLS_Y"])+1, np.max(ctx["WALLS_Y"])-1
+    x = np.random.uniform(x_low, x_high, size=(ctx["N_PARTICLES"]))
+    y = np.random.uniform(y_low, y_high, size=(ctx["N_PARTICLES"]))
+    particles = []
+    for i in range(len(x)):
+        particles.append(Particle(ctx, x[i], y[i], initial_orientation))
+    return particles
 
 def print_particles(particles):
     for i, particle in enumerate(particles):
@@ -301,3 +322,13 @@ def motor_control_client(s, rev):
         return motor_control_resp.error
     except rospy.ServiceException as e:
         print("Service call failed: %s"%e)
+
+def move_to_angle(move):
+    if move == Moves.FORWARD:
+        return 0
+    elif move == Moves.BACKWARD:
+        return 180 # TODO fix
+    elif move == Moves.LEFT:
+        return np.deg2rad(20)
+    elif move == Moves.RIGHT:
+        return np.deg2rad(-20)

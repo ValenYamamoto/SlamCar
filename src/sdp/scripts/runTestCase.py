@@ -9,6 +9,7 @@ import numpy as np
 
 from slam import FastSLAM, SLAMContext, motion_model
 from utils import (
+    Moves,
     Particle, 
     ParametricLine, 
     read_yaml_file, 
@@ -16,7 +17,10 @@ from utils import (
     get_intersection_with_map,
     servo_control_client,
     motor_control_client,
-    create_observations
+    create_observations,
+    generate_wall_lines,
+    generate_spread_particles,
+    move_to_angle
 )
 
 from dashboard.dashboard_socket import DashboardSocket
@@ -59,38 +63,38 @@ def wall_generator(wall_distance):
     return [ParametricLine(np.array([[wall_distance],[-32]]), np.array([[0], [64]]))]
 
 def get_observation(ctx, wall_distance, map_lines):
-    obs = wall_distance
-    slopes = [
-        np.array(
-            [
-                [ctx["RANGE"] * np.cos(angle)],
-                [ctx["RANGE"] * np.sin(angle)],
-            ]
-        )
-        for angle in ctx["ANGLES"]
-    ]
     while True:
-        lines = [ParametricLine(np.array([[wall_distance], [0]]), slope) for slope in slopes]
+        slopes = [
+            np.array(
+                [
+                    [ctx["RANGE"] * np.cos(angle+ctx['theta'])],
+                    [ctx["RANGE"] * np.sin(angle+ctx['theta'])],
+                ]
+            )
+            for angle in ctx["ANGLES"]
+        ]
+        lines = [ParametricLine(np.array([[ctx['x']], [ctx['y']]]), slope) for slope in slopes]
         line_intersects = []
         z_map = []
-        print("WALL DIST:", wall_distance)
         for angle, line in zip(ctx["ANGLES"], lines):
             status, t, idx = get_intersection_with_map(map_lines, line)
             if status:
                 z_map.append([line.r(t), angle, 0])  # hardcode 0 for now
         yield np.array(z_map).T
-        wall_distance += ctx["DELTA"]
 
-def update_position(move):
-    pass
-
-def generate_spread_particles(ctx, mini, maxi):
-    x = np.linspace(mini, maxi, ctx["N_PARTICLES"])
-    particles = []
-    for pos in x:
-        particles.append(Particle(ctx, pos, 0, 0))
-    return particles
-
+def update_position(ctx, move):
+    position = Particle(ctx, ctx['x'], ctx['y'], ctx['theta'])
+    if move == Moves.FORWARD:
+        particle = motion_model(ctx, position, 0)
+    elif move == Moves.BACKWARD:
+        particle = motion_model(ctx, position, 180) # TODO fix
+    elif move == Moves.LEFT:
+        particle = motion_model(ctx, position, 20)
+    elif move == Moves.RIGHT:
+        particle = motion_model(ctx, position, -20)
+    ctx['x'] = particle.x()
+    ctx['y'] = particle.y()
+    ctx['theta'] = particle.orientation()
 
 def loginfo(s):
     global isJetson
@@ -107,6 +111,7 @@ if __name__ == "__main__":
     else:
         parser = argparse.ArgumentParser()
         parser.add_argument("-y", "--yaml", default="")
+        parser.add_argument("-s", "--simulation", action='store_true')
         args = parser.parse_args()
 
     socket = DashboardSocket(True, HOST, PORT)
@@ -146,23 +151,23 @@ if __name__ == "__main__":
         else:
             ctx = SLAMContext()
 
-        # setup particles
-        particles = generate_spread_particles(ctx, 0, WALL_DISTANCE)
-
         # setup wall
-        map_lines = wall_generator(WALL_DISTANCE)
-        print("MAP", map_lines)
+        map_lines = generate_wall_lines(ctx)
 
-        # setup FastSLAM instance for localization
+        # setup FastSLAM instance
         fastSlam = FastSLAM(ctx, x, y, theta, motion_model, map_lines)
-        fastSlam.particles = particles
+        # setup particles
+        if params_dict["PARTICLE_STATE"]=='localize':
+            particles = generate_spread_particles(ctx)
+            fastSlam.particles = particles
 
         # get observation generator for simulation
         obs_generator = get_observation(ctx, x, map_lines)
 
         # log initial state
+        print(f"POSITION x: {ctx['x']} y: {ctx['y']} theta: {ctx['theta']}")
         log_particles(fastSlam.particles, socket=socket)
-        loginfo("READY")
+        print()
 
         if isJetson:
             r = rospy.Rate(ctx["RATE"]) # in hz
@@ -172,25 +177,31 @@ if __name__ == "__main__":
                 continue 
             print("Sensor data ready")
 
-        input("press to begin")
+        if not args.simulation:
+            input("press to begin")
 
         for move in ctx["MOVES"]:
+            print("MOVE:", move)
             if not isJetson:
+                update_position(ctx, move)
+                print(f"POSITION x: {ctx['x']} y: {ctx['y']} theta: {ctx['theta']}")
                 z = next(obs_generator)
             else:
                 z = create_observations(ctx, sensor_data)
             loginfo(f"Z {z}")
-            fastSlam.run(0, z)
+
+            fastSlam.run(move_to_angle(move), z)
             if z.size > 0 and (np.any(z[0,:] < 10) or np.any(abs(z[0,:] - 10) < 1)):
                 break
             log_particles(fastSlam.particles, socket=socket)
             err = motor_control_client(10, 0)
-            loginfo("moving motors")
             if isJetson:
                 input("press to continue")
                 #r.sleep()
             else:
-                input("press to continue")
+                if not args.simulation:
+                    input("press to continue")
+            print()
         err = motor_control_client(0, 0)
         loginfo("Stopping motors")
         log_particles(fastSlam.particles, socket=socket)

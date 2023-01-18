@@ -22,31 +22,32 @@ st.title("SLAM Dashboard")
 
 # Connect Socket
 socket = DashboardSocket(False, HOST, PORT)
-socket.connect()
-
-
-# creating a single-element container
-placeholder = st.empty()
-with placeholder.container():
-
-    kpi1, kpi2 = st.columns(2)
-
-    kpi1.metric(
-        label="Monte Carlo Estimate",
-        value=f"N/A",
-    )
-    
-    kpi2.metric(
-        label="Importance Weight Estimate",
-        value=f"N/A",
-    )
-    
-        
-    st.markdown("### Detailed Data View")
-    st.markdown("No Data Yet")
 
 
 try:
+    # creating a single-element container
+    placeholder = st.empty()
+    with placeholder.container():
+
+        kpi1, kpi2 = st.columns(2)
+
+        kpi1.metric(
+            label="Monte Carlo Estimate",
+            value=f"N/A",
+        )
+        
+        kpi2.metric(
+            label="Importance Weight Estimate",
+            value=f"N/A",
+        )
+        
+            
+        st.markdown("### Detailed Data View")
+        st.markdown("No Data Yet")
+
+    socket.connect()
+
+
     while True:
 
         msg = socket.receive()

@@ -16,6 +16,13 @@ class SLAMContext:
         "LM_THRESH": 2,
         "ANGLES": [-1.5708, -1.0472, -0.5236, 0, 0.5236, 1.0472, 1.5708],
         "RANGE": 10,
+        'x': 0,
+        'y': 0,
+        'theta': 0,
+        'WALLS_X': 0,
+        'WALLS_Y': 0,
+        'MOVES': [],
+        'RATE': [],
     }
 
     @classmethod
