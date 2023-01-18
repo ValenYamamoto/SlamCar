@@ -26,7 +26,7 @@ from utils import (
 from dashboard.dashboard_socket import DashboardSocket
     
 
-isJetson = not socket.gethostname().startswith("DESK")
+isJetson = not (socket.gethostname().startswith("DESK") or socket.gethostname().startswith("LAP"))
 
 if isJetson:
     import rospy
@@ -89,9 +89,9 @@ def update_position(ctx, move):
     elif move == Moves.BACKWARD:
         particle = motion_model(ctx, position, 180) # TODO fix
     elif move == Moves.LEFT:
-        particle = motion_model(ctx, position, 20)
+        particle = motion_model(ctx, position, np.deg2rad(20/ctx["RATE"]))
     elif move == Moves.RIGHT:
-        particle = motion_model(ctx, position, -20)
+        particle = motion_model(ctx, position, np.deg2rad(-20/ctx["RATE"]))
     ctx['x'] = particle.x()
     ctx['y'] = particle.y()
     ctx['theta'] = particle.orientation()
@@ -190,7 +190,7 @@ if __name__ == "__main__":
                 z = create_observations(ctx, sensor_data)
             loginfo(f"Z {z}")
 
-            fastSlam.run(move_to_angle(move), z)
+            fastSlam.run(move_to_angle(move)/ctx["RATE"], z)
             if z.size > 0 and (np.any(z[0,:] < 10) or np.any(abs(z[0,:] - 10) < 1)):
                 break
             log_particles(fastSlam.particles, socket=socket)

@@ -237,13 +237,16 @@ def generate_spread_particles(ctx):
         for i in range(len(x)):
             particles.append(Particle(ctx, x[i], y, initial_orientation))
         return particles
+    x_size = ctx["N_PARTICLES"] // 5
+    y_size = ctx["N_PARTICLES"] // x_size
     x_low, x_high = np.min(ctx["WALLS_X"])+1, np.max(ctx["WALLS_X"])-1
     y_low, y_high = np.min(ctx["WALLS_Y"])+1, np.max(ctx["WALLS_Y"])-1
-    x = np.random.uniform(x_low, x_high, size=(ctx["N_PARTICLES"]))
-    y = np.random.uniform(y_low, y_high, size=(ctx["N_PARTICLES"]))
+    x = np.linspace(x_low, x_high, x_size)
+    y = np.linspace(y_low, y_high, y_size)
     particles = []
-    for i in range(len(x)):
-        particles.append(Particle(ctx, x[i], y[i], initial_orientation))
+    for xi in x:
+        for yi in y:
+            particles.append(Particle(ctx, xi, yi, initial_orientation))
     return particles
 
 def print_particles(particles):
