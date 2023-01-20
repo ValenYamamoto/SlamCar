@@ -6,9 +6,7 @@ from numpy import array
 
 
 def parse_file(f):
-    x, y, theta, mc, iw, obs, steps, moves = [], [], [], [], [], [], [], []
     step = 0
-    steps.append(step)
     step += 1
 
     next(f)
@@ -16,54 +14,40 @@ def parse_file(f):
     position_line = next(f)
     position = parse_position(position_line)
 
-    x.append(position[0])
-    y.append(position[1])
-    theta.append(position[2])
-
     initial_est = parse_particles(f)
-    mc.append(initial_est[0])
-    iw.append(initial_est[1])
 
-    moves.append("NONE")
-    obs.append([])
+    s = to_string(step, position, initial_est, "NONE", [])
     next(f)
     
     while True:
         move_line = next(f)
         if move_line.startswith("MOVE"):
-            steps.append(step)
-            step += 1
             move = parse_move(move_line)
-            moves.append(move)
 
             position_line = next(f)
             position = parse_position(position_line)
-            x.append(position[0])
-            y.append(position[1])
-            theta.append(position[2])
             
             observations = parse_obs_array(f)
-            obs.append(observations)
 
             est = parse_particles(f)
-            mc.append(est[0])
-            iw.append(est[1])
 
+            s += to_string(step, position, est, move, observations)
             next(f)
+            step += 1
         else:
             break
-    df = pd.DataFrame(data={
-        "step": steps,
-        "x": x,
-        "y": y,
-        "theta": theta,
-        "move": moves,
-        "mc": mc,
-        "iw": iw,
-        "observations": obs,
-    })
-    return df
+    return s
 
+def to_string(step, position, est, move, obs):
+    s = f'{step},"[{position[0]:.2f},{position[1]:.2f},{position[2]:.2f}"],{move},'
+    s += '"['
+    for o in obs:
+        s += f"({o[0]:.2f}, {o[1]:.2f}) "
+    s += ']"\n'
+    mc = est[0]
+    iw = est[1]
+    s += f'"[{mc[0]:.2f},{mc[1]:.2f},{mc[2]:.2f}]","[{iw[0]:.2f},{iw[1]:.2f},{iw[2]:.2f}]",'
+    return s
 
 
 def parse_position(line):
@@ -110,6 +94,7 @@ def parse_obs_array(f):
 
 if __name__ == "__main__":
     with open(sys.argv[1]) as f:
-        df = parse_file(f)
-    print(df.to_csv(index=False))
+        s = parse_file(f)
+    print("step,position,move,mc,iw,observations")
+    print(s)
 
