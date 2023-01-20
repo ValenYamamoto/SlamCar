@@ -269,13 +269,15 @@ def log_particles(particles, socket=False):
             rospy.loginfo(
                 f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
             )
-        rospy.loginfo(f"MC Est: {mc} IW Est: {iw}")
+        rospy.loginfo(f"MCEst: {mc}")
+        rospy.loginfo(f"IWEst: {iw}")
     else:
         for i, particle in enumerate(particles):
             print(
                 f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
             )
-        print(f"MC Est: {mc} IW Est: {iw}")
+        print(f"MCEst: {mc}")
+        print(f"IWEst: {iw}")
     if socket:
         socket.send(create_particle_string(particles))
 
