@@ -1,1 +1,1 @@
-/home/valen/jetson_car/src/sdp/scripts/test_params/test_case_2.yaml
+/home/valen/jetson_car/src/sdp/scripts/test_params/test_case_4.yaml

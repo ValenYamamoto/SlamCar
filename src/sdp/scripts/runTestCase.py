@@ -119,7 +119,7 @@ if __name__ == "__main__":
         socket.connect()
     except:
         print("Socket did not connect") 
-        exit(1)
+        socket=False
     try:
 
         x = 0
@@ -188,7 +188,7 @@ if __name__ == "__main__":
                 z = next(obs_generator)
             else:
                 z = create_observations(ctx, sensor_data)
-            loginfo(f"Z {z}")
+            loginfo(f"Z {repr(z)}")
 
             fastSlam.run(move_to_angle(move)/ctx["RATE"], z)
             if z.size > 0 and (np.any(z[0,:] < 10) or np.any(abs(z[0,:] - 10) < 1)):
@@ -204,6 +204,9 @@ if __name__ == "__main__":
             print()
         err = motor_control_client(0, 0)
         loginfo("Stopping motors")
-        log_particles(fastSlam.particles, socket=socket)
+        # log_particles(fastSlam.particles, socket=socket)
     finally:
-        socket.close()
+        if socket is False:
+            pass
+        else:
+            socket.close()

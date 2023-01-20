@@ -21,11 +21,17 @@ def graph_estimate(x, y):
     return fig
 
 def graph_walls(d):
-    print(d["WALLS_X"])
     walls_x = d['WALLS_X']
     walls_y = d['WALLS_Y']
 
     fig = go.Scatter(x=walls_x, y=walls_y, mode='lines', name='walls')
+    return fig
+
+def graph_landmarks(d):
+    walls_x = d['LANDMARK_X']
+    walls_y = d['LANDMARK_Y']
+
+    fig = go.Scatter(x=walls_x, y=walls_y, mode='lines', name='landmark')
     return fig
 
 def create_figure(particles, estimate, walls):
@@ -44,7 +50,11 @@ def create_figure(particles, estimate, walls):
     else:
         x_min, x_max = np.min(d["WALLS_X"]), np.max(d["WALLS_X"]) + 1
         y_min, y_max = np.min(d["WALLS_Y"]) - 1, np.max(d["WALLS_Y"]) + 1
-    data = (graph_particles(*particles), graph_estimate(*estimate), graph_walls(d))
+    data = [graph_particles(*particles), graph_estimate(*estimate), graph_walls(d)]
+    if d["N_LANDMARKS"] < 0:
+        landmark_walls = graph_landmark(d)
+        data.append(landmark_walls)
+
     figure = go.Figure(
             data=data,
             layout=dict(
