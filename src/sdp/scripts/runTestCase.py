@@ -197,8 +197,10 @@ if __name__ == "__main__":
             loginfo(f"Z {repr(z)}")
 
             fastSlam.run(move_to_angle(move)/ctx["RATE"], z)
+            """
             if z.size > 0 and (np.any(z[0,:] < 10) or np.any(abs(z[0,:] - 10) < 1)):
                 break
+            """
             log_particles(fastSlam.particles, socket=socket)
             err = motor_control_client(20, 0)
             if isJetson:
@@ -215,6 +217,8 @@ if __name__ == "__main__":
             loginfo(f"elapsed: {elapsed}")
         loginfo("Stopping motors")
         # log_particles(fastSlam.particles, socket=socket)
+    except Exception as e:
+        print(e)
     finally:
         if socket is False:
             pass
