@@ -7,7 +7,6 @@ from numpy import array
 
 def parse_file(f):
     step = 0
-    step += 1
 
     next(f)
     next(f)
@@ -17,6 +16,7 @@ def parse_file(f):
     initial_est = parse_particles(f)
 
     s = to_string(step, position, initial_est, "NONE", [])
+    step += 1
     next(f)
     
     while True:
@@ -39,14 +39,14 @@ def parse_file(f):
     return s
 
 def to_string(step, position, est, move, obs):
-    s = f'{step},"[{position[0]:.2f},{position[1]:.2f},{position[2]:.2f}"],{move},'
+    s = f'{step},"[{position[0]:.2f},{position[1]:.2f},{position[2]:.2f}]",'
     s += '"['
     for o in obs:
         s += f"({o[0]:.2f}, {o[1]:.2f}) "
-    s += ']"\n'
+    s += ']",'
     mc = est[0]
     iw = est[1]
-    s += f'"[{mc[0]:.2f},{mc[1]:.2f},{mc[2]:.2f}]","[{iw[0]:.2f},{iw[1]:.2f},{iw[2]:.2f}]",'
+    s += f'{move},"[{mc[0]:.2f},{mc[1]:.2f},{mc[2]:.2f}]","[{iw[0]:.2f},{iw[1]:.2f},{iw[2]:.2f}]",\n'
     return s
 
 
@@ -95,6 +95,6 @@ def parse_obs_array(f):
 if __name__ == "__main__":
     with open(sys.argv[1]) as f:
         s = parse_file(f)
-    print("step,position,move,mc,iw,observations")
+    print('Time Step, Actual Position,"Observations (distance, angle)",Move,Monte Carlo Est,Importance Weight Est,')
     print(s)
 
