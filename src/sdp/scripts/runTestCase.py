@@ -34,8 +34,7 @@ if isJetson:
 
     import board
     from sdp.msg import ToFData
-else:
-    import argparse
+import argparse
 
 MAX_ANGLE = 180 
 MIN_ANGLE = 0
@@ -108,7 +107,6 @@ if __name__ == "__main__":
         rospy.init_node("WallTest")
         rospy.Subscriber('/tof_data', ToFData, tof_callback)
         i2c = board.I2C()
-    else:
         parser = argparse.ArgumentParser()
         parser.add_argument("-y", "--yaml", default="")
         parser.add_argument("-s", "--simulation", action='store_true')
@@ -126,8 +124,11 @@ if __name__ == "__main__":
         y = 0
         theta = 0
 
+        err = servo_control_client(100, SERVO_CHANNEL)
+
         if isJetson: 
-            params_dict = read_yaml_file("/home/sdp10/catkin_ws/src/sdp/scripts/params.yaml")
+            #params_dict = read_yaml_file("/home/sdp10/catkin_ws/src/sdp/scripts/params.yaml")
+            params_dict = read_yaml_file(args.yaml)
             ctx = SLAMContext.init_from_dict(params_dict)
             if 'x' in params_dict:
                 x = params_dict['x']
@@ -179,8 +180,13 @@ if __name__ == "__main__":
 
         if not args.simulation:
             input("press to begin")
+            start = time.perf_counter_ns()
 
-        for move in ctx["MOVES"]:
+        #for move in ctx["MOVES"]:
+        i = 0
+        while i < len(ctx["MOVES"]):
+            move = ctx["MOVES"][i]
+            i+=1
             print("MOVE:", move)
             if not isJetson:
                 update_position(ctx, move)
@@ -194,15 +200,19 @@ if __name__ == "__main__":
             if z.size > 0 and (np.any(z[0,:] < 10) or np.any(abs(z[0,:] - 10) < 1)):
                 break
             log_particles(fastSlam.particles, socket=socket)
-            err = motor_control_client(10, 0)
+            err = motor_control_client(20, 0)
             if isJetson:
-                input("press to continue")
-                #r.sleep()
+                #input("press to continue")
+                r.sleep()
             else:
                 if not args.simulation:
                     input("press to continue")
             print()
         err = motor_control_client(0, 0)
+        if not args.simulation and isJetson:
+            end = time.perf_counter_ns()
+            elapsed = (end - start) / 1e9
+            loginfo(f"elapsed: {elapsed}")
         loginfo("Stopping motors")
         log_particles(fastSlam.particles, socket=socket)
     finally:
