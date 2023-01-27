@@ -8,7 +8,7 @@ from std_msgs.msg import Int32
 
 
 MAX_SPD_DC = 2900
-MIN_SPD_DC = 4850
+MIN_SPD_DC = 7250
 MOTOR_CHANNEL = 0
 MAX_SPD = 100
 MIN_SPD = 0
