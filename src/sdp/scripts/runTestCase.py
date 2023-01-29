@@ -117,7 +117,7 @@ if __name__ == "__main__":
         socket.connect()
     except:
         print("Socket did not connect") 
-        exit(1)
+        socket=False
     try:
 
         x = 0
@@ -183,10 +183,9 @@ if __name__ == "__main__":
             start = time.perf_counter_ns()
 
         #for move in ctx["MOVES"]:
-        i = 0
+        move = ctx["MOVES"][0]
+        i = 1
         while i < len(ctx["MOVES"]):
-            move = ctx["MOVES"][i]
-            i+=1
             print("MOVE:", move)
             if not isJetson:
                 update_position(ctx, move)
@@ -194,13 +193,16 @@ if __name__ == "__main__":
                 z = next(obs_generator)
             else:
                 z = create_observations(ctx, sensor_data)
-            loginfo(f"Z {z}")
-
+            loginfo(f"Z {repr(z)}")
+            i+=1
             fastSlam.run(move_to_angle(move)/ctx["RATE"], z)
+            if isJetson:
+                err = motor_control_client(20, 0)
+            """
             if z.size > 0 and (np.any(z[0,:] < 10) or np.any(abs(z[0,:] - 10) < 1)):
                 break
+            """
             log_particles(fastSlam.particles, socket=socket)
-            err = motor_control_client(20, 0)
             if isJetson:
                 #input("press to continue")
                 r.sleep()
@@ -214,6 +216,11 @@ if __name__ == "__main__":
             elapsed = (end - start) / 1e9
             loginfo(f"elapsed: {elapsed}")
         loginfo("Stopping motors")
-        log_particles(fastSlam.particles, socket=socket)
+        # log_particles(fastSlam.particles, socket=socket)
+    except Exception as e:
+        print(e)
     finally:
-        socket.close()
+        if socket is False:
+            pass
+        else:
+            socket.close()

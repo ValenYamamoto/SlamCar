@@ -269,13 +269,15 @@ def log_particles(particles, socket=False):
             rospy.loginfo(
                 f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
             )
-        rospy.loginfo(f"MC Est: {mc} IW Est: {iw}")
+        rospy.loginfo(f"MCEst: {mc}")
+        rospy.loginfo(f"IWEst: {iw}")
     else:
         for i, particle in enumerate(particles):
             print(
                 f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
             )
-        print(f"MC Est: {mc} IW Est: {iw}")
+        print(f"MCEst: {mc}")
+        print(f"IWEst: {iw}")
     if socket:
         socket.send(create_particle_string(particles))
 
@@ -287,6 +289,12 @@ def create_particle_string(particles):
         
 def scale_servo_angle(angle):
     return (angle + math.pi) / (2 * math.pi) * 180
+
+
+def turn_to_servo_angle(phi):
+    """ phi is in radians"""
+    return 180.49955056 * phi + 101.42095328055964
+    
 
 def create_observations(ctx, sensor_data):
     distance = []
@@ -335,3 +343,7 @@ def move_to_angle(move):
         return np.deg2rad(20)
     elif move == Moves.RIGHT:
         return np.deg2rad(-20)
+
+def move_jetson(motor, servo):
+    err = motor_control_client(20, 0)
+    err = servo_control_client(servo, SERVO_CHANNEL)
