@@ -184,6 +184,12 @@ if __name__ == "__main__":
 
         #for move in ctx["MOVES"]:
         move = ctx["MOVES"][0]
+        if isJetson:
+            i = 0
+            while i==0:
+                move_jetson(20, move_to_angle(move))
+                i+= 1
+                r.sleep()
         i = 1
         while i < len(ctx["MOVES"]):
             print("MOVE:", move)
@@ -196,8 +202,9 @@ if __name__ == "__main__":
             loginfo(f"Z {repr(z)}")
             i+=1
             fastSlam.run(move_to_angle(move)/ctx["RATE"], z)
+            move = ctx["MOVES"][i]
             if isJetson:
-                err = motor_control_client(20, 0)
+                move_jetson(20, move_to_angle(move))
             """
             if z.size > 0 and (np.any(z[0,:] < 10) or np.any(abs(z[0,:] - 10) < 1)):
                 break

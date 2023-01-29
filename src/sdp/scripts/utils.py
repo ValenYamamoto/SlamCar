@@ -293,7 +293,7 @@ def scale_servo_angle(angle):
 
 def turn_to_servo_angle(phi):
     """ phi is in radians"""
-    return 180.49955056 * phi + 101.42095328055964
+    return round(180.49955056 * phi + 101.42095328055964)
     
 
 def create_observations(ctx, sensor_data):
@@ -344,6 +344,7 @@ def move_to_angle(move):
     elif move == Moves.RIGHT:
         return np.deg2rad(-20)
 
-def move_jetson(motor, servo):
-    err = motor_control_client(20, 0)
-    err = servo_control_client(servo, SERVO_CHANNEL)
+def move_jetson(motor_speed, turn_angle):
+    err = motor_control_client(motor_speed, 0)
+    err = servo_control_client(turn_to_servo_angle(turn_angle), SERVO_CHANNEL)
+
