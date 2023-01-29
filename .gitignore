@@ -7,3 +7,4 @@ src/sdp/scripts/davidStreamGPU.py
 src/sdp/scripts/gpu_instance.py
 src/sdp/scripts/status_out.png
 src/sdp/scripts/veryBasicCudaExample.py
+src/sdp/scripts/params_filename.txt
