@@ -290,6 +290,12 @@ def create_particle_string(particles):
 def scale_servo_angle(angle):
     return (angle + math.pi) / (2 * math.pi) * 180
 
+
+def turn_to_servo_angle(phi):
+    """ phi is in radians"""
+    return 180.49955056 * phi + 101.42095328055964
+    
+
 def create_observations(ctx, sensor_data):
     distance = []
     angles = []
@@ -337,3 +343,7 @@ def move_to_angle(move):
         return np.deg2rad(20)
     elif move == Moves.RIGHT:
         return np.deg2rad(-20)
+
+def move_jetson(motor, servo):
+    err = motor_control_client(20, 0)
+    err = servo_control_client(servo, SERVO_CHANNEL)
