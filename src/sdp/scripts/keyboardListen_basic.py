@@ -12,10 +12,10 @@ ANGLE_STEP = 18
 
 MAX_SPD = 100
 MIN_SPD = 0
-SPD_STEP = 5
+SPD_STEP = 1
 
 SERVO_CHANNEL = 15
-
+CURRENT_DIRECTION = 0
 
 def servo_control_client(a, ch):
     rospy.wait_for_service('servo_control_srv')
@@ -40,6 +40,9 @@ def motor_control_client(s, rev):
 if __name__ == "__main__":
     cur_angle = 90
     cur_spd = 0
+    #global CURRENT_DIRECTION
+    CURRENT_DIRECTION = 0
+    err = motor_control_client(cur_spd, CURRENT_DIRECTION)
     while(True):
         err = 0
         kp = getch.getch()
@@ -56,17 +59,23 @@ if __name__ == "__main__":
                 cur_angle -= ANGLE_STEP
             err = servo_control_client(cur_angle, SERVO_CHANNEL)
         elif (kp == "w"):
-            if(cur_spd + SPD_STEP > MAX_SPD):
-                cur_spd = MAX_SPD
-            else:
-                cur_spd += SPD_STEP
-            err = motor_control_client(cur_spd, 0)
+            if (CURRENT_DIRECTION == 0):
+                cur_spd = cur_spd + SPD_STEP if cur_spd + SPD_STEP <= MAX_SPD else MAX_SPD
+            else: # CURRENT_DIRECTION == 1 (reverse)
+                cur_spd = cur_spd - SPD_STEP
+                if (cur_spd < 0):
+                    CURRENT_DIRECTION = 0
+                    cur_spd = abs(cur_spd)
+            err = motor_control_client(cur_spd, CURRENT_DIRECTION)
         elif (kp == "s"):
-            if(cur_spd - SPD_STEP < MIN_SPD):
-                cur_spd = MIN_SPD
-            else:
-                cur_spd -= SPD_STEP
-            err = motor_control_client(cur_spd, 0)
+            if (CURRENT_DIRECTION == 1):
+                cur_spd = cur_spd + SPD_STEP if cur_spd + SPD_STEP <= MAX_SPD else MAX_SPD
+            else: # CURRENT_DIRECTION == 0 (forward)
+                cur_spd = cur_spd - SPD_STEP
+                if (cur_spd < 0):
+                    CURRENT_DIRECTION = 1
+                    cur_spd = abs(cur_spd)
+            err = motor_control_client(cur_spd, CURRENT_DIRECTION)
         elif (kp == " "):
             cur_spd = 0
             err = motor_control_client(cur_spd, 0)
@@ -75,8 +84,9 @@ if __name__ == "__main__":
             err = servo_control_client(cur_angle, SERVO_CHANNEL)
         else:
             print("Invalid Keyboard Input")
-        if(err > 0):
-            print("Client Returned Error: " + str(err))
+        #if(err > 0):
+        #    print("Client Returned Error: " + str(err))
 
         print("ANGLE: " + str(cur_angle))
         print("SPEED: " + str(cur_spd))
+        print("DIRECTION: " + str(CURRENT_DIRECTION))

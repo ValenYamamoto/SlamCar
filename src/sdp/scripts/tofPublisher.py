@@ -5,9 +5,14 @@ import adafruit_vl53l4cd
 import adafruit_tca9548a
 from board import SCL, SDA
 import busio
+from micropython import const
 
 INTER_MEASUREMENT = 0
 TIMING_BUDGET = 200
+
+_VL53L4CD_RANGE_OFFSET_MM = const(0x001E)
+_VL53L4CD_INNER_OFFSET_MM = const(0x0020)
+_VL53L4CD_OUTER_OFFSET_MM = const(0x0022)
 
 RANGING = False
 tof = None
@@ -19,14 +24,15 @@ def init_sensors():
     #mux_pos_list = [5]
     tof_sensors = []
     for mux_pos_index in mux_pos_list:
-        print(f"Trying to init {mux_pos_index}")
+        rospy.loginfo(f"Trying to init {mux_pos_index}")
         try:
             tof_sensors.append(adafruit_vl53l4cd.VL53L4CD(mux[mux_pos_index]))
-            print(f"sensor initialized: "
+            tof_sensors[-1]._write_register(_VL53L4CD_RANGE_OFFSET_MM, bytearray(b'\x1f'))
+            rospy.loginfo(f"sensor initialized: "
                     f"{mux_pos_index + 1 if mux_pos_index < 5 else 0}" 
                     f" sensors remaining")
         except:
-            print(f"Oops, {mux_pos_index}")
+            rospy.loginfo(f"Oops, {mux_pos_index}")
     return tof_sensors
 
 def set_sensor_parameters(tof_sensors, inter_measurement, timing_budget):
@@ -35,15 +41,17 @@ def set_sensor_parameters(tof_sensors, inter_measurement, timing_budget):
         sensor.timing_budget = timing_budget
 
 def start_ranging(tof):
+    rospy.loginfo("Starting Ranging")
     for sensor in tof:
         sensor.start_ranging()
+    rospy.loginfo("Finished Starting Ranging")
 
 def stop_ranging(tof):
     for sensor in tof:
         sensor.stop_ranging()
 
 def get_readings(tof):
-    data = [0] * len(tof)
+    data = [0] * 6 
     for i in range(len(tof)):
         tof[i].clear_interrupt()
         tof[i].distance

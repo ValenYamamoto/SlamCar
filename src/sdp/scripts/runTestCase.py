@@ -20,7 +20,8 @@ from utils import (
     create_observations,
     generate_wall_lines,
     generate_spread_particles,
-    move_to_angle
+    move_to_angle,
+    move_jetson
 )
 
 from dashboard.dashboard_socket import DashboardSocket
@@ -202,9 +203,12 @@ if __name__ == "__main__":
             loginfo(f"Z {repr(z)}")
             i+=1
             fastSlam.run(move_to_angle(move)/ctx["RATE"], z)
-            move = ctx["MOVES"][i]
-            if isJetson:
-                move_jetson(20, move_to_angle(move))
+            rospy.loginfo(f"HERE HERE {i}, {len(ctx['MOVES'])}")
+            if i < len(ctx["MOVES"]):
+                rospy.loginfo("HERE")
+                move = ctx["MOVES"][i]
+                if isJetson:
+                    move_jetson(15, move_to_angle(move))
             """
             if z.size > 0 and (np.any(z[0,:] < 10) or np.any(abs(z[0,:] - 10) < 1)):
                 break
@@ -227,6 +231,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     finally:
+        err = motor_control_client(0, 0)
         if socket is False:
             pass
         else:

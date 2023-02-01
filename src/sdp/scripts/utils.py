@@ -304,8 +304,8 @@ def create_observations(ctx, sensor_data):
         if data == -1:
             continue
         else:
-            distance.append(data)
-            angles.append(angle)
+            distance.append(data+5.08)
+            angles.append(-angle)
             landmark.append(0) # hardcode for now
     return np.array([distance, angles, landmark])
 
@@ -346,5 +346,6 @@ def move_to_angle(move):
 
 def move_jetson(motor_speed, turn_angle):
     err = motor_control_client(motor_speed, 0)
+    rospy.loginfo(f"MOVE JETSON {turn_angle} {turn_to_servo_angle(turn_angle)}")
     err = servo_control_client(turn_to_servo_angle(turn_angle), SERVO_CHANNEL)
 
