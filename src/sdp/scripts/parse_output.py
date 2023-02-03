@@ -1,6 +1,7 @@
 import sys
 import re
 import pandas as pd
+import argparse
 
 from numpy import array
 
@@ -38,8 +39,50 @@ def parse_file(f):
             break
     return s
 
+def parse_jetson_file(f):
+    step = 0
+
+    next(f)
+    next(f)
+    position_line = next(f)
+    position = parse_position(position_line)
+
+    initial_est = parse_particles(f)
+
+    s = to_string_jetson(step, initial_est, "NONE", [])
+    step += 1
+    next(f)
+    
+    while True:
+        move_line = next(f)
+        if move_line.startswith("MOVE"):
+            move = parse_move(move_line)
+
+            
+            observations = parse_obs_array(f)
+
+            est = parse_particles(f)
+
+            s += to_string_jetson(step, est, move, observations)
+            next(f)
+            step += 1
+        else:
+            break
+    return s
+
 def to_string(step, position, est, move, obs):
     s = f'{step},"[{position[0]:.2f},{position[1]:.2f},{position[2]:.2f}]",'
+    s += '"['
+    for o in obs:
+        s += f"({o[0]:.2f}, {o[1]:.2f}) "
+    s += ']",'
+    mc = est[0]
+    iw = est[1]
+    s += f'{move},"[{mc[0]:.2f},{mc[1]:.2f},{mc[2]:.2f}]","[{iw[0]:.2f},{iw[1]:.2f},{iw[2]:.2f}]",\n'
+    return s
+
+def to_string_jetson(step, est, move, obs):
+    s = f'{step},'
     s += '"['
     for o in obs:
         s += f"({o[0]:.2f}, {o[1]:.2f}) "
@@ -65,24 +108,25 @@ def parse_move(line):
 def parse_particles(f):
     iw, mc =0, 0
     for line in f:
-        result = re.search("^([MI][CW])Est: (.*)", line.strip())
+        result = re.search("([MI][CW])Est: (.*)", line.strip())
         if result:
             if result.group(1) == "MC":
                 mc = eval(result.group(2))
             if result.group(1) == "IW":
                 iw = eval(result.group(2))
                 return iw, mc
-        elif not line.startswith("Particle"):
+        elif not line.startswith("Particle") and not line.startswith("[INFO]"):
             return 0, 0
 
 def parse_obs_array(f):
     result = ""
     for line in f:
+        re_result = re.search("Z (array.*)", line.strip())
         if line.strip().endswith("])"):
             result += line
             break
-        elif line.startswith("Z"):
-            result += line[1:]
+        elif re_result:
+            result += re_result.group(1) 
         else:
             result += line
     result = eval(result)
@@ -93,8 +137,17 @@ def parse_obs_array(f):
 
 
 if __name__ == "__main__":
-    with open(sys.argv[1]) as f:
-        s = parse_file(f)
-    print('Time Step, Actual Position,"Observations (distance, angle)",Move,Monte Carlo Est,Importance Weight Est,')
-    print(s)
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filename')
+    parser.add_argument('-j', '--jetson', action='store_true')
+    args = parser.parse_args()
+    if not args.jetson:
+        with open(args.filename) as f:
+            s = parse_file(f)
+        print('Time Step, Actual Position,"Observations (distance, angle)",Move,Monte Carlo Est,Importance Weight Est,')
+        print(s)
+    else:
+        with open(args.filename) as f:
+            s = parse_jetson_file(f)
+        print('Time Step, "Observations (distance, angle)",Move,Monte Carlo Est,Importance Weight Est,')
+        print(s)
