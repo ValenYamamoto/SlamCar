@@ -221,7 +221,7 @@ if __name__ == "__main__":
                 if not args.simulation:
                     input("press to continue")
             print()
-        err = motor_control_client(0, 0)
+        move_jetson(0, 0)
         if not args.simulation and isJetson:
             end = time.perf_counter_ns()
             elapsed = (end - start) / 1e9
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     finally:
-        err = motor_control_client(0, 0)
+        move_jetson(0, 0)
         if socket is False:
             pass
         else:
