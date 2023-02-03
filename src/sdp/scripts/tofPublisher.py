@@ -84,7 +84,7 @@ def run_sensor_node():
     tof = init_sensors()
     rospy.loginfo("Finished Initializing Sensors")
     start_ranging(tof)
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(20)
     while not rospy.is_shutdown():
         reading = get_readings(tof)
         pub.publish(reading)

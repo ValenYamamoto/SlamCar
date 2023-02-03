@@ -340,12 +340,11 @@ def move_to_angle(move):
     elif move == Moves.BACKWARD:
         return 180 # TODO fix
     elif move == Moves.LEFT:
-        return np.deg2rad(20)
+        return np.deg2rad(23)
     elif move == Moves.RIGHT:
-        return np.deg2rad(-20)
+        return np.deg2rad(-23)
 
 def move_jetson(motor_speed, turn_angle):
     err = motor_control_client(motor_speed, 0)
-    rospy.loginfo(f"MOVE JETSON {turn_angle} {turn_to_servo_angle(turn_angle)}")
     err = servo_control_client(turn_to_servo_angle(turn_angle), SERVO_CHANNEL)
 
