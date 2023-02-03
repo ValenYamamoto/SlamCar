@@ -108,10 +108,10 @@ if __name__ == "__main__":
         rospy.init_node("WallTest")
         rospy.Subscriber('/tof_data', ToFData, tof_callback)
         i2c = board.I2C()
-        parser = argparse.ArgumentParser()
-        parser.add_argument("-y", "--yaml", default="")
-        parser.add_argument("-s", "--simulation", action='store_true')
-        args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-y", "--yaml", default="")
+    parser.add_argument("-s", "--simulation", action='store_true')
+    args = parser.parse_args()
 
     socket = DashboardSocket(True, HOST, PORT)
     try:
@@ -203,9 +203,7 @@ if __name__ == "__main__":
             loginfo(f"Z {repr(z)}")
             i+=1
             fastSlam.run(move_to_angle(move)/ctx["RATE"], z)
-            rospy.loginfo(f"HERE HERE {i}, {len(ctx['MOVES'])}")
             if i < len(ctx["MOVES"]):
-                rospy.loginfo("HERE")
                 move = ctx["MOVES"][i]
                 if isJetson:
                     move_jetson(15, move_to_angle(move))

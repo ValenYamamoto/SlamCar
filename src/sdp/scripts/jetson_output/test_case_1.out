@@ -14,9 +14,7 @@ POSITION x: 20 y: 100 theta: 0.0
 [INFO] [1675273346.979747]: MCEst: [49.5, 100.0, 0.0]
 [INFO] [1675273346.983585]: IWEst: [49.50000000000001, 100.00000000000001, 0.0]
 
-Waiting for sensor data
-Sensor data ready
-press to beginMOVE: Moves.FORWARD
+MOVE: Moves.FORWARD
 [INFO] [1675273361.183759]: Z array([[85.38000305, 86.88000305],
        [-0.31415927,  0.31415927],
        [ 0.        ,  0.        ]])
