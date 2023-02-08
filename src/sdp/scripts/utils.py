@@ -340,9 +340,19 @@ def move_to_angle(move):
     elif move == Moves.BACKWARD:
         return 180 # TODO fix
     elif move == Moves.LEFT:
-        return np.deg2rad(23)
+        return np.deg2rad(20)
     elif move == Moves.RIGHT:
-        return np.deg2rad(-23)
+        return np.deg2rad(-20)
+
+def move_to_angle_jetson(move):
+    if move == Moves.FORWARD:
+        return 0
+    elif move == Moves.BACKWARD:
+        return 180 # TODO fix
+    elif move == Moves.LEFT:
+        return np.deg2rad(15)
+    elif move == Moves.RIGHT:
+        return np.deg2rad(-15)
 
 def move_jetson(motor_speed, turn_angle):
     err = motor_control_client(motor_speed, 0)

@@ -1,4 +1,4 @@
-ANGLES: [-90, -54, -18, 18, 54, 90]
+ANGLES: [-90, -55, -15, 15, 55, 90]
 DELTA: 9
 N_PARTICLES: 30
 PARTICLE_STATE: localize

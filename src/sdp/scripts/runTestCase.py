@@ -21,6 +21,7 @@ from utils import (
     generate_wall_lines,
     generate_spread_particles,
     move_to_angle,
+    move_to_angle_jetson,
     move_jetson
 )
 
@@ -206,7 +207,7 @@ if __name__ == "__main__":
             if i < len(ctx["MOVES"]):
                 move = ctx["MOVES"][i]
                 if isJetson:
-                    move_jetson(15, move_to_angle(move))
+                    move_jetson(20, move_to_angle_jetson(move))
             """
             if z.size > 0 and (np.any(z[0,:] < 10) or np.any(abs(z[0,:] - 10) < 1)):
                 break
