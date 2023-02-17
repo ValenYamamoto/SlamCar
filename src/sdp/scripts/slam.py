@@ -448,11 +448,11 @@ def motion_model(
         [
             [
                 (ctx["DELTA"] + noise[0, 0])
-                * math.cos(particle.orientation() + d_angle / 2 + noise[1, 0])
+                * math.sin(particle.orientation() + d_angle / 2 + noise[1, 0])
             ],
             [
                 (ctx["DELTA"] + noise[0, 0])
-                * math.sin(particle.orientation() + d_angle / 2 + noise[1, 0])
+                * math.cos(particle.orientation() + d_angle / 2 + noise[1, 0])
             ],
             [d_angle + noise[1, 0]],
         ]
