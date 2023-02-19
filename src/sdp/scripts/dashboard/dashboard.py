@@ -6,7 +6,7 @@ import plotly.express as px
 import streamlit as st 
 
 from dashboard_socket import DashboardSocket, str_to_particles
-from dashboard_utils import create_figure
+from dashboard_utils import create_figure, read_yaml_file
 
 HOST = '127.0.0.1'
 PORT = 65432
@@ -52,7 +52,9 @@ try:
 
         msg = socket.receive()
         if msg:
-            particles = str_to_particles(msg)
+            d = read_yaml_file()
+            x, y, w, landmarks = str_to_particles(msg, d['N_LANDMARKS'])
+            """
             x_pos, y_pos, iw = [], [], []
             mc_x, mc_y, iw_x, iw_y, iw_total = 0, 0, 0, 0, 0
             for x, y, w in particles:
@@ -68,8 +70,15 @@ try:
             mc_y /= len(x_pos)
             iw_x /= iw_total
             iw_y /= iw_total
+            """
+            mc_x = np.mean(x)
+            mc_y = np.mean(y)
+            iw_x = np.sum(x * w) / np.sum(w)
+            iw_y = np.sum(y * w) / np.sum(w)
+            landmark_ests = np.mean(landmarks, axis=0)
 
-            df = pd.DataFrame({'x': x, "y": y, "w": iw})
+
+            df = pd.DataFrame({'x': x, "y": y, "w": w})
 
             with placeholder.container():
 
@@ -90,8 +99,8 @@ try:
                 # fig = px.scatter(x=x_pos, y=y_pos)
                 # fig.update_xaxes(range=[-2, 22])
                 # fig.update_yaxes(range=[-2, 22])
-                # st.write(fig)
-                fig = create_figure((x_pos, y_pos), (mc_x, mc_y), (100, 100))
+                # st.write(fig
+                fig = create_figure(d, (x, y), (mc_x, mc_y), landmark_ests)
                 st.write(fig)
                     
                 st.markdown("### Detailed Data View")

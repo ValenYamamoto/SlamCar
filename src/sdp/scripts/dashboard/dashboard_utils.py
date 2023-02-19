@@ -28,13 +28,24 @@ def graph_walls(d):
     return fig
 
 def graph_landmarks(d):
-    walls_x = d['LANDMARK_X']
-    walls_y = d['LANDMARK_Y']
+    results = []
+    for i in range(len(d['LANDMARK_X'])):
+        walls_x, walls_y = generate_landmark_walls(d, d['LANDMARK_X'][i], d['LANDMARK_Y'][i])
+        fig = go.Scatter(x=walls_x, y=walls_y, mode='lines', name='landmark')
+        results.append(fig)
+    return results 
 
-    fig = go.Scatter(x=walls_x, y=walls_y, mode='lines', name='landmark')
+def generate_landmark_walls(d, x, y):
+    x_bot = x - d['LANDMARK_R']
+    y_bot = y - d['LANDMARK_R']
+    r = d['LANDMARK_R'] * 2 # actually the diameter but im lazy
+    return [x_bot, x_bot, x_bot+r, x_bot+r, x_bot], [y_bot, y_bot+r, y_bot+r, y_bot, y_bot]
+
+def graph_landmark_estimate(landmarks):
+    fig = go.Scatter(x=landmarks[:, 0], y=landmarks[:, 1], mode='markers', name='landmark est', marker=dict(size=15, color='green'))
     return fig
 
-def create_figure(particles, estimate, walls):
+def create_figure(d, particles, estimate, landmarks):
     """
     particles: (x_array, y_array)
     estimate: ([x_pos], [y_pos])
@@ -43,7 +54,6 @@ def create_figure(particles, estimate, walls):
     returns: figure
 
     """
-    d = read_yaml_file()
     if len(d["WALLS_X"]) == 2:
         x_min, x_max = -1, np.max(d["WALLS_X"]) + 1
         y_min, y_max = np.min(d["WALLS_Y"]) - 1, np.max(d["WALLS_Y"]) + 1
@@ -51,9 +61,11 @@ def create_figure(particles, estimate, walls):
         x_min, x_max = np.min(d["WALLS_X"]), np.max(d["WALLS_X"]) + 1
         y_min, y_max = np.min(d["WALLS_Y"]) - 1, np.max(d["WALLS_Y"]) + 1
     data = [graph_particles(*particles), graph_estimate(*estimate), graph_walls(d)]
-    if d["N_LANDMARKS"] < 0:
-        landmark_walls = graph_landmark(d)
-        data.append(landmark_walls)
+    if d["N_LANDMARKS"] > 0:
+        landmark_walls = graph_landmarks(d)
+        data += landmark_walls
+        data.append(graph_landmark_estimate(landmarks))
+        print(landmarks)
 
     figure = go.Figure(
             data=data,

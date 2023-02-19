@@ -64,9 +64,16 @@ def particles_to_str():
         c += f"{a:05.3f} {b:05.3f} {d:05.3f} \n\r"
     return c
 
-def str_to_particles(data):
-    result = []
-    for i in range(0, len(data), 3):
+def str_to_particles(data, n_landmarks):
+    x, y, w, landmarks = [], [], [], []
+    particle_length = n_landmarks * 2 + 3 
+    for i in range(0, len(data), particle_length):
         a, b, c = float(data[i]), float(data[i+1]), float(data[i+2])
-        result.append((a, b, c))
-    return result
+        x.append(a)
+        y.append(b)
+        w.append(c)
+        current = []
+        for j in range(n_landmarks):
+            current.append([float(data[i+3+2*j]), float(data[i+4+2*j])])
+        landmarks.append(current)
+    return np.array(x), np.array(y), np.array(w), np.array(landmarks)
