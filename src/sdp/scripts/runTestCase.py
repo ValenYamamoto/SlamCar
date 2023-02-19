@@ -19,6 +19,7 @@ from utils import (
     motor_control_client,
     create_observations,
     generate_wall_lines,
+    generate_landmark_lines,
     generate_spread_particles,
     move_to_angle,
     move_jetson
@@ -62,13 +63,13 @@ def tof_callback(data):
 def wall_generator(wall_distance):
     return [ParametricLine(np.array([[wall_distance],[-32]]), np.array([[0], [64]]))]
 
-def get_observation(ctx, wall_distance, map_lines):
+def get_observation(ctx, wall_distance, map_lines, landmark_lines):
     while True:
         slopes = [
             np.array(
                 [
-                    [ctx["RANGE"] * np.cos(angle+ctx['theta'])],
                     [ctx["RANGE"] * np.sin(angle+ctx['theta'])],
+                    [ctx["RANGE"] * np.cos(angle+ctx['theta'])],
                 ]
             )
             for angle in ctx["ANGLES"]
@@ -78,8 +79,15 @@ def get_observation(ctx, wall_distance, map_lines):
         z_map = []
         for angle, line in zip(ctx["ANGLES"], lines):
             status, t, idx = get_intersection_with_map(map_lines, line)
+            current = 200 # a large number
             if status:
-                z_map.append([line.r(t), angle, 0])  # hardcode 0 for now
+                current = line.r(t)
+            status, t, idx = get_intersection_with_map(landmark_lines, line)
+            if status and line.r(t) < current:
+                current = line.r(t)
+
+            z_map.append([current, angle, 0])  # hardcode 0 for now
+            
         yield np.array(z_map).T
 
 def update_position(ctx, move):
@@ -153,8 +161,12 @@ if __name__ == "__main__":
         else:
             ctx = SLAMContext()
 
+
         # setup wall
         map_lines = generate_wall_lines(ctx)
+        print('BEFORE')
+        landmark_lines = generate_landmark_lines(ctx)
+        print("LINES GENERATED")
 
         # setup FastSLAM instance
         fastSlam = FastSLAM(ctx, x, y, theta, motion_model, map_lines)
@@ -164,7 +176,7 @@ if __name__ == "__main__":
             fastSlam.particles = particles
 
         # get observation generator for simulation
-        obs_generator = get_observation(ctx, x, map_lines)
+        obs_generator = get_observation(ctx, x, map_lines, landmark_lines)
 
         # log initial state
         print(f"POSITION x: {ctx['x']} y: {ctx['y']} theta: {ctx['theta']}")

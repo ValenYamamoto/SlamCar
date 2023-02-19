@@ -21,6 +21,9 @@ class SLAMContext:
         'theta': 0,
         'WALLS_X': 0,
         'WALLS_Y': 0,
+        'LANDMARK_X': [],
+        'LANDMARK_Y': [],
+        'WALLS_Y': 0,
         'MOVES': [],
         'RATE': [],
     }
@@ -71,10 +74,12 @@ class FastSLAM:
         theta = z[1]
         landmark_idx = int(z[2])
 
+        ### TODO: actually check
         s = math.sin(pi_2_pi(particle.orientation() + theta))
         c = math.cos(pi_2_pi(particle.orientation() + theta))
-        particle.landmarks[landmark_idx].mu[0] = particle.x() + r * c
-        particle.landmarks[landmark_idx].mu[1] = particle.x() + r * s
+        particle.landmarks[landmark_idx].mu[0] = particle.x() + r * s
+        particle.landmarks[landmark_idx].mu[1] = particle.y() + r * c
+        print(theta, r, particle.x(), particle.y(), particle.orientation())
 
         Gz = np.array([[c, -r * s], [s, r * c]])
 
@@ -188,9 +193,9 @@ class FastSLAM:
         particles = []
         for i in range(len(self.particles)):
             noise = self.generate_noise()
-            particles.append(
-                self.motion_model(self.ctx, self.particles[i], d_angle, noise)
-            )
+            new_particle = self.motion_model(self.ctx, self.particles[i], d_angle, noise)
+            new_particle.set_landmarks(self.particles[i].landmarks)
+            particles.append(new_particle)
         return particles
 
     def feature_extraction(self, z):
@@ -242,6 +247,7 @@ class FastSLAM:
             z = z[:, 0]
             theta = z[1]
             r = z[0] + self.ctx["LANDMARK_R"]
+            print('EXTRACT', r, theta)
             return np.array([[r], [theta], [0]])
 
     def normalize_weights(self):
@@ -293,28 +299,38 @@ class FastSLAM:
         for i in range(len(inds)):
             new_particle = self.particles[inds[i]].copy()
             new_particle.old_weight = self.particles[inds[i]].importance_weight
+            #print("OLD", *self.particles[inds[i]].landmarks)
+            #print("NEW", *new_particle.landmarks)
             resampled_particles.append(new_particle)
 
         return resampled_particles
 
     def run(self, d_angle, z, is_moving=True):
+        print("START", *self.particles[0].landmarks)
         if is_moving:
             self.particles = self.extend_path(d_angle)
+        print("POST MOVING", *self.particles[0].landmarks)
 
         if np.any(z):
             z_map, z_landmark = self.feature_extraction(z)
+            print("POST FEATURE EXTRACT", *self.particles[0].landmarks)
 
             n_feature_obs = 0
             if np.any(z_landmark):
                 n_feature_obs = z_landmark.shape[1]
                 z_landmark = self.landmark_extraction(z_landmark)
+            print("POST LANDMARK EXTRACT", *self.particles[0].landmarks)
 
             if z_map.shape[0] != 0:
                 self.update_weights_map(z_map)
+            print("POST MAP UPDATE", *self.particles[0].landmarks)
             if z_landmark.shape[0] != 0:
                 self.update_weights_landmarks(z_landmark, n_feature_obs)
+            print("POST LANDMARK UPDATE", *self.particles[0].landmarks)
 
         self.particles = self.resampling()
+
+        print("POST RESAMPLE", *self.particles[0].landmarks)
 
     def update_EKF(
         self, landmark: Landmark, dz: np.array, Q: np.array, Hf: np.array, n_feature_obs
@@ -394,6 +410,8 @@ class FastSLAM:
                 if (
                     abs(self.particles[i].landmarks[landmark_idx].mu[0]) <= 0.01
                 ):  # if landmark does not exist yet
+                    #print("ADDING NEW LANDMARK ************************************")
+                    #print(landmark_idx, self.particles[i].landmarks[landmark_idx].mu[0])
                     self.particles[i] = self.add_new_landmark(
                         self.particles[i], z[:, iz], self.ctx["Q"]
                     )  # add landmark
