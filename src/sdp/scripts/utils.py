@@ -5,6 +5,8 @@ import numpy as np
 import yaml
 import socket
 
+from copy import deepcopy
+
 
 isJetson = not (socket.gethostname().startswith("DESK") or socket.gethostname().startswith("LAP"))
 if isJetson:
@@ -34,6 +36,9 @@ class Landmark:
     def __init__(self):
         self.mu = np.zeros((2, 1))
         self.sigma = np.zeros((2, 2))
+
+    def __str__(self):
+        return f"({self.mu[0, 0]} {self.mu[1, 0]})"
 
 
 class Particle:
@@ -75,8 +80,8 @@ class Particle:
         theta = self.orientation()
         slope = np.array(
             [
-                [self.ctx["RANGE"] * np.cos(angle + theta)],
                 [self.ctx["RANGE"] * np.sin(angle + theta)],
+                [self.ctx["RANGE"] * np.cos(angle + theta)],
             ]
         )
         line = ParametricLine(self.pos[:2, :], slope)
@@ -91,7 +96,7 @@ class Particle:
         return self.pos[2, 0]
 
     def set_landmarks(self, landmarks):
-        self.landmarks = landmarks
+        self.landmarks = deepcopy(landmarks)
 
     def x(self):
         return self.pos[0, 0]
@@ -181,6 +186,17 @@ def calculate_mc_estimate(particles):
     theta /= len(particles)
     return [x, y, theta]
 
+def calculate_mc_landmark(ctx, particles):
+    x, y, theta = 0, 0, 0
+    for particle in particles:
+        x += particle.x()
+        y += particle.y()
+        theta += particle.orientation()
+    x /= len(particles)
+    y /= len(particles)
+    theta /= len(particles)
+    return [x, y, theta]
+
 def calculate_importance_weight_mc(particles):
     x, y, theta = 0, 0, 0
     weight_total = 0
@@ -227,6 +243,34 @@ def generate_wall_lines(ctx):
         walls.append(ParametricLine(start, slope))
     return walls
 
+def generate_landmark_lines(ctx):
+    walls = []
+    for i in range(len(ctx["LANDMARK_X"])):
+        print("HI1")
+        bot_x = ctx["LANDMARK_X"][i] - ctx["LANDMARK_R"]
+        bot_y = ctx["LANDMARK_Y"][i] - ctx["LANDMARK_R"]
+        top_x = ctx["LANDMARK_X"][i] + ctx["LANDMARK_R"]
+        top_y = ctx["LANDMARK_Y"][i] + ctx["LANDMARK_R"]
+        print("HI")
+        r = ctx["LANDMARK_R"] * 2
+
+        start = np.array([[bot_x], [bot_y]])
+        slope = np.array([[r], [0]])
+        walls.append(ParametricLine(start, slope))
+
+        start = np.array([[bot_x], [bot_y]])
+        slope = np.array([[0], [r]])
+        walls.append(ParametricLine(start, slope))
+
+        start = np.array([[bot_x], [top_y]])
+        slope = np.array([[r], [0]])
+        walls.append(ParametricLine(start, slope))
+
+        start = np.array([[top_x], [bot_y]])
+        slope = np.array([[0], [r]])
+        walls.append(ParametricLine(start, slope))
+    return walls
+
 def generate_spread_particles(ctx):
     initial_orientation = ctx["theta"]
     if len(ctx["WALLS_X"]) == 2:
@@ -252,7 +296,8 @@ def generate_spread_particles(ctx):
 def print_particles(particles):
     for i, particle in enumerate(particles):
         print(
-            f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
+            f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f} \
+                    {particle.landmarks[i]}"
         )
 
     mc = calculate_mc_estimate(particles)
@@ -274,7 +319,7 @@ def log_particles(particles, socket=False):
     else:
         for i, particle in enumerate(particles):
             print(
-                f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
+                f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f} {particle.landmarks[0]}"
             )
         print(f"MCEst: {mc}")
         print(f"IWEst: {iw}")
@@ -284,7 +329,11 @@ def log_particles(particles, socket=False):
 def create_particle_string(particles):
     s = ''
     for particle in particles:
-        s += f"{particle.x():6.2f} {particle.y():6.2f} {particle.old_weight:6.2f}\r\n"
+        s += f"{particle.x():6.2f} {particle.y():6.2f} {particle.old_weight:6.2f}"
+        for landmark in particle.landmarks:
+            s += f" {landmark.mu[0,0]:6.2f} {landmark.mu[1,0]:6.2f}"
+        s += "\r\n"
+
     return s
         
 def scale_servo_angle(angle):
