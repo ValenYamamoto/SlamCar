@@ -5,6 +5,7 @@ import sys
 import signal
 import rospy
 from sdp.srv import *
+from sdp.msg import GyroData
 
 MAX_ANGLE = 180 #TODO: Check if these are updated
 MIN_ANGLE = 0
@@ -15,6 +16,14 @@ MIN_SPD = 0
 SPD_STEP = 5
 
 SERVO_CHANNEL = 15
+
+
+gyro_value = 0
+
+def callback(data):
+    global gyro_value
+    gyro_value = data.z
+    #print(f'{data.z}', end='\r')
 
 def servo_control_client(a, ch):
     rospy.wait_for_service('servo_control_srv')
@@ -41,6 +50,9 @@ def sigint_handler(signum, frame):
 
 
 if __name__ == "__main__":
+    rospy.init_node("gyro_listener")
+    rospy.Subscriber('/gyro_data', GyroData, callback)
+
     angle = int(sys.argv[1])
     print(angle)
     err = servo_control_client(angle, SERVO_CHANNEL)
@@ -48,9 +60,15 @@ if __name__ == "__main__":
     input()
     signal.signal(signal.SIGINT, sigint_handler)
     print("Starting Motors")
+    start_angle_1 = gyro_value
     err = motor_control_client(20, 0)
-    rospy.sleep(2)
+    rospy.sleep(1)
+    start_angle = gyro_value
+    rospy.sleep(1)
+    end_angle = gyro_value
     print("Stopping Motors")
+    print(end_angle - start_angle)
+    print(end_angle - start_angle_1)
     err = motor_control_client(0, 0)
     rospy.sleep(1)
     err = servo_control_client(100, SERVO_CHANNEL)
