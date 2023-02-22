@@ -312,7 +312,7 @@ def log_particles(particles, socket=False):
     if isJetson:
         for i, particle in enumerate(particles):
             rospy.loginfo(
-                f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
+                f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f} {particle.landmarks[0]}"
             )
         rospy.loginfo(f"MCEst: {mc}")
         rospy.loginfo(f"IWEst: {iw}")
@@ -352,9 +352,11 @@ def create_observations(ctx, sensor_data):
     for data, angle in zip(sensor_data, ctx["ANGLES"]):
         if data == -1:
             continue
+        elif data > 89:
+            continue
         else:
-            distance.append(data+5.08)
-            angles.append(-angle)
+            distance.append(data+11)
+            angles.append(angle)
             landmark.append(0) # hardcode for now
     return np.array([distance, angles, landmark])
 

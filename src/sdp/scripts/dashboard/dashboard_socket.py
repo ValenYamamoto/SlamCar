@@ -67,7 +67,12 @@ def particles_to_str():
 def str_to_particles(data, n_landmarks):
     x, y, w, landmarks = [], [], [], []
     particle_length = n_landmarks * 2 + 3 
+    print("DATA LENGTH", len(data))
+    if len(data) < 3+n_landmarks*2:
+        return [0], [0], [0], [[0, 0]]
+
     for i in range(0, len(data), particle_length):
+        print("INDEX", i)
         a, b, c = float(data[i]), float(data[i+1]), float(data[i+2])
         x.append(a)
         y.append(b)
