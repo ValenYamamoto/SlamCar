@@ -319,7 +319,7 @@ def log_particles(particles, socket=False):
     else:
         for i, particle in enumerate(particles):
             print(
-                f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f} {particle.landmarks[0]}"
+                f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f}"
             )
         print(f"MCEst: {mc}")
         print(f"IWEst: {iw}")

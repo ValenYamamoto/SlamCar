@@ -79,7 +79,7 @@ class FastSLAM:
         c = math.cos(pi_2_pi(particle.orientation() + theta))
         particle.landmarks[landmark_idx].mu[0] = particle.x() + r * s
         particle.landmarks[landmark_idx].mu[1] = particle.y() + r * c
-        print(theta, r, particle.x(), particle.y(), particle.orientation())
+        #print(theta, r, particle.x(), particle.y(), particle.orientation())
 
         Gz = np.array([[c, -r * s], [s, r * c]])
 
@@ -247,7 +247,7 @@ class FastSLAM:
             z = z[:, 0]
             theta = z[1]
             r = z[0] + self.ctx["LANDMARK_R"]
-            print('EXTRACT', r, theta)
+            #print('EXTRACT', r, theta)
             return np.array([[r], [theta], [0]])
 
     def normalize_weights(self):
@@ -306,31 +306,31 @@ class FastSLAM:
         return resampled_particles
 
     def run(self, d_angle, z, is_moving=True):
-        print("START", *self.particles[0].landmarks)
+        #print("START", *self.particles[0].landmarks)
         if is_moving:
             self.particles = self.extend_path(d_angle)
-        print("POST MOVING", *self.particles[0].landmarks)
+        #print("POST MOVING", *self.particles[0].landmarks)
 
         if np.any(z):
             z_map, z_landmark = self.feature_extraction(z)
-            print("POST FEATURE EXTRACT", *self.particles[0].landmarks)
+            #print("POST FEATURE EXTRACT", *self.particles[0].landmarks)
 
             n_feature_obs = 0
             if np.any(z_landmark):
                 n_feature_obs = z_landmark.shape[1]
                 z_landmark = self.landmark_extraction(z_landmark)
-            print("POST LANDMARK EXTRACT", *self.particles[0].landmarks)
+            #print("POST LANDMARK EXTRACT", *self.particles[0].landmarks)
 
             if z_map.shape[0] != 0:
                 self.update_weights_map(z_map)
-            print("POST MAP UPDATE", *self.particles[0].landmarks)
+            #print("POST MAP UPDATE", *self.particles[0].landmarks)
             if z_landmark.shape[0] != 0:
                 self.update_weights_landmarks(z_landmark, n_feature_obs)
-            print("POST LANDMARK UPDATE", *self.particles[0].landmarks)
+            #print("POST LANDMARK UPDATE", *self.particles[0].landmarks)
 
         self.particles = self.resampling()
 
-        print("POST RESAMPLE", *self.particles[0].landmarks)
+        #print("POST RESAMPLE", *self.particles[0].landmarks)
 
     def update_EKF(
         self, landmark: Landmark, dz: np.array, Q: np.array, Hf: np.array, n_feature_obs
@@ -466,11 +466,11 @@ def motion_model(
         [
             [
                 (ctx["DELTA"] + noise[0, 0])
-                * math.sin(particle.orientation() + d_angle / 2 + noise[1, 0])
+                * math.sin(particle.orientation() + d_angle + noise[1, 0])
             ],
             [
                 (ctx["DELTA"] + noise[0, 0])
-                * math.cos(particle.orientation() + d_angle / 2 + noise[1, 0])
+                * math.cos(particle.orientation() + d_angle + noise[1, 0])
             ],
             [d_angle + noise[1, 0]],
         ]
