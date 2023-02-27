@@ -42,7 +42,7 @@ class StraightPID(PIDController):
 
 def FSM(state, pos):
     if state == State.STRAIGHT1:
-        if pos[1] >= 80:
+        if pos[1] >= 90:
             return State.TURN
         return State.STRAIGHT1
     if state == State.STRAIGHT2:

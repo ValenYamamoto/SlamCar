@@ -8,7 +8,7 @@ import traceback
 
 import numpy as np
 
-from auto import FSM, FSM_actions, State
+from auto import FSM, FSM_actions, State, auto_move_to_angle
 from slam import FastSLAM, SLAMContext, motion_model
 from utils import (
     Moves,
@@ -85,6 +85,8 @@ def get_observation(ctx, wall_distance, map_lines, landmark_lines):
             if status and line.r(t) < current:
                 current = line.r(t)
 
+            if current == 200:
+                continue
             z_map.append([current, angle, 0])  # hardcode 0 for now
             
         yield np.array(z_map).T
@@ -96,9 +98,9 @@ def update_position(ctx, move):
     elif move == Moves.BACKWARD:
         particle = motion_model(ctx, position, 180) # TODO fix
     elif move == Moves.LEFT:
-        particle = motion_model(ctx, position, np.deg2rad(35/ctx["RATE"]))
-    elif move == Moves.RIGHT:
         particle = motion_model(ctx, position, np.deg2rad(-35/ctx["RATE"]))
+    elif move == Moves.RIGHT:
+        particle = motion_model(ctx, position, np.deg2rad(35/ctx["RATE"]))
     ctx['x'] = particle.x()
     ctx['y'] = particle.y()
     ctx['theta'] = particle.orientation()
@@ -109,6 +111,10 @@ def loginfo(s):
         rospy.loginfo(s)
     else:
         print(s)
+
+def print_observations(z):
+    for i in range(z.shape[1]):
+        print(f"Angle: {z[1, i]} Dist: {z[0,i]}")
 
 if __name__ == "__main__":
     if isJetson:
@@ -209,9 +215,10 @@ if __name__ == "__main__":
                 z = next(obs_generator)
             else:
                 z = create_observations(ctx, sensor_data)
-            loginfo(f"Z {repr(z)}")
+            #loginfo(f"Z {repr(z)}")
+            #print_observations(z)
             i+=1
-            fastSlam.run(move_to_angle(move)/ctx["RATE"], z)
+            fastSlam.run(auto_move_to_angle(move)/ctx["RATE"], z)
 
             # compute current position and get next move from FSM
             pos = fastSlam.compute_MC_expected_position()

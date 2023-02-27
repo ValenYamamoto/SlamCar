@@ -4,6 +4,9 @@ from typing import List, Tuple, Callable
 
 from utils import Particle, ParametricLine, get_intersection_with_map, Landmark, pi_2_pi
 
+def print_observations(z):
+    for i in range(z.shape[1]):
+        print(f"Angle: {z[1, i]} Dist: {z[0,i]}")
 
 class SLAMContext:
     constants = {
@@ -140,6 +143,9 @@ class FastSLAM:
         """
         map_line_idx = int(z[2])
         z_hat, idx = particle.get_expected_map_observations(self.map_lines, z[1])
+        if idx == -1:
+            dz = 111 - z_hat
+        #print_observations(z_hat)
         dz = z[0:2].reshape(2, 1) - z_hat
         dz[1, 0] = pi_2_pi(dz[1, 0])
 
