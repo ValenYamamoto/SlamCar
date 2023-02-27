@@ -29,6 +29,8 @@ class SLAMContext:
         'WALLS_Y': 0,
         'MOVES': [],
         'RATE': [],
+        'X1': 0,
+        'X2': 0,
     }
 
     @classmethod

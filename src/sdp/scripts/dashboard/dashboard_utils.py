@@ -27,6 +27,24 @@ def graph_walls(d):
     fig = go.Scatter(x=walls_x, y=walls_y, mode='lines', name='walls')
     return fig
 
+def graph_track_walls(d):
+    x1 = d["X1"]
+    x2 = d["X2"]
+    x1_in1 = 100
+    x2_in1 = 100
+    x1_in2 = d["X1"] - 100
+    x2_in2 = d["X2"] - 100
+    walls_x = [0, 0, x1, x1, 0]
+    walls_y = [0, x2, x2, 0, 0]
+
+    fig = go.Scatter(x=walls_x, y=walls_y, mode='lines', name='walls')
+    
+    walls_x = [x1_in1, x1_in1, x1_in2, x1_in2, x1_in1]
+    walls_y = [x2_in1, x2_in2, x2_in2, x2_in1, x2_in1]
+    fig2 = go.Scatter(x=walls_x, y=walls_y, mode='lines', name='walls')
+
+    return [fig, fig2]
+
 def graph_landmarks(d):
     results = []
     for i in range(len(d['LANDMARK_X'])):
@@ -54,13 +72,18 @@ def create_figure(d, particles, estimate, landmarks):
     returns: figure
 
     """
-    if len(d["WALLS_X"]) == 2:
-        x_min, x_max = -1, np.max(d["WALLS_X"]) + 1
-        y_min, y_max = np.min(d["WALLS_Y"]) - 1, np.max(d["WALLS_Y"]) + 1
+    if d['X1'] == 0:
+        if len(d["WALLS_X"]) == 2:
+            x_min, x_max = -1, np.max(d["WALLS_X"]) + 1
+            y_min, y_max = np.min(d["WALLS_Y"]) - 1, np.max(d["WALLS_Y"]) + 1
+        else:
+            x_min, x_max = np.min(d["WALLS_X"]), np.max(d["WALLS_X"]) + 1
+            y_min, y_max = np.min(d["WALLS_Y"]) - 1, np.max(d["WALLS_Y"]) + 1
+        data = [graph_particles(*particles), graph_estimate(*estimate), graph_walls(d)]
     else:
-        x_min, x_max = np.min(d["WALLS_X"]), np.max(d["WALLS_X"]) + 1
-        y_min, y_max = np.min(d["WALLS_Y"]) - 1, np.max(d["WALLS_Y"]) + 1
-    data = [graph_particles(*particles), graph_estimate(*estimate), graph_walls(d)]
+        x_min, x_max = -1, d["X1"] + 1
+        y_min, y_max = -1, d["X2"] + 1
+        data = [graph_particles(*particles), graph_estimate(*estimate), *graph_track_walls(d)]
     if d["N_LANDMARKS"] > 0:
         landmark_walls = graph_landmarks(d)
         data += landmark_walls

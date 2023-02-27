@@ -8,7 +8,10 @@ class State(Enum):
     STRAIGHT2 = 2
     STRAIGHT3 = 3
     STRAIGHT4 = 4
-    TURN = 5
+    TURN1 = 5
+    TURN2 = 6
+    TURN3 = 7
+    TURN4 = 8
 
 class PIDController:
 
@@ -40,27 +43,63 @@ class StraightPID(PIDController):
         error = target - curr_value
         return super().next(error)
 
-def FSM(state, pos):
-    if state == State.STRAIGHT1:
-        if pos[1] >= 90:
-            return State.TURN
-        return State.STRAIGHT1
-    if state == State.STRAIGHT2:
-        if pos[0] <= 10:
-            return State.TURN
-        return State.STRAIGHT2
-    if state == State.TURN:
-        if pos[2] >= np.deg2rad(-90):
-            return State.TURN
-        return State.STRAIGHT2
+class FSM:
+    def __init__(self, x1, x2):
+        self.x1 = x1
+        self.x2 = x2
+        self.turn_start = 0
 
-def FSM_actions(state):
-    if state == State.STRAIGHT1:
-        return Moves.FORWARD
-    if state == State.STRAIGHT2:
-        return Moves.FORWARD
-    if state == State.TURN:
-        return Moves.LEFT
+    def next_state(self, state, pos):
+        if state == State.STRAIGHT1:
+            if pos[1] >= self.x2 - 110:
+                self.turn_start = 0
+                return State.TURN1
+            return State.STRAIGHT1
+
+        if state == State.TURN1:
+            delta = pos[2] - self.turn_start
+            if delta >= np.deg2rad(-90):
+                return State.TURN1
+            return State.STRAIGHT2
+
+        if state == State.STRAIGHT2:
+            if pos[0] <= 110:
+                return State.TURN2
+            return State.STRAIGHT2
+
+        if state == State.TURN2:
+            if pos[2] <= 0:
+                return State.TURN2
+            return State.STRAIGHT3
+
+        if state == State.STRAIGHT3:
+            if pos[1] <= 110:
+                self.turn_start = np.deg2rad(180)
+                return State.TURN3
+            return State.STRAIGHT3
+
+        if state == State.TURN3:
+            delta = pos[2] - self.turn_start
+            if delta >= np.deg2rad(-90):
+                return State.TURN3
+            return State.STRAIGHT4
+
+        if state == State.STRAIGHT4:
+            if pos[0] >= self.x1 - 110:
+                return State.TURN4
+            return State.STRAIGHT4
+
+        if state == State.TURN4:
+            if pos[2] >= 0:
+                return State.TURN4
+            return State.STRAIGHT1
+
+
+    def actions(self, state):
+        if state in [State.STRAIGHT1, State.STRAIGHT2, State.STRAIGHT3, State.STRAIGHT4]:
+            return Moves.FORWARD
+        else:
+            return Moves.LEFT
 
 def auto_move_to_angle(move):
     if move == Moves.FORWARD:

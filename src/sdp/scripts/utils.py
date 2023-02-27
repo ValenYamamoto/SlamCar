@@ -175,6 +175,25 @@ def get_intersection_with_map(
                 ret = True, t, i
     return ret
 
+def generate_auto_walls(ctx):
+    x1 = ctx["X1"]
+    x2 = ctx["X2"]
+    walls = []
+    walls.append(ParametricLine(np.array([[0], [0]]), np.array([[x1],[0]]))) 
+    walls.append(ParametricLine(np.array([[0], [0]]), np.array([[0],[x2]]))) 
+
+    walls.append(ParametricLine(np.array([[x1], [0]]), np.array([[0],[x2]]))) 
+    walls.append(ParametricLine(np.array([[0], [x2]]), np.array([[x1],[0]]))) 
+
+    walls.append(ParametricLine(np.array([[100], [100]]), np.array([[x1-200],[100]])))
+    walls.append(ParametricLine(np.array([[100], [100]]), np.array([[100],[x2-200]]))) 
+
+    walls.append(ParametricLine(np.array([[x1-100], [100]]), np.array([[0],[x2-200]]))) 
+    walls.append(ParametricLine(np.array([[100], [x2-100]]), np.array([[x1-200],[0]]))) 
+
+    return walls
+
+
 def calculate_mc_estimate(particles):
     x, y, theta = 0, 0, 0
     for particle in particles:

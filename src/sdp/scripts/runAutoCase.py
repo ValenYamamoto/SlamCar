@@ -8,7 +8,7 @@ import traceback
 
 import numpy as np
 
-from auto import FSM, FSM_actions, State, auto_move_to_angle
+from auto import FSM, State, auto_move_to_angle
 from slam import FastSLAM, SLAMContext, motion_model
 from utils import (
     Moves,
@@ -21,6 +21,7 @@ from utils import (
     motor_control_client,
     create_observations,
     generate_wall_lines,
+    generate_auto_walls,
     generate_landmark_lines,
     generate_spread_particles,
     move_to_angle,
@@ -124,6 +125,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-y", "--yaml", default="")
     parser.add_argument("-s", "--simulation", action='store_true')
+    parser.add_argument("-t", "--track", action='store_true')
     args = parser.parse_args()
 
     socket = DashboardSocket(True, HOST, PORT)
@@ -166,10 +168,11 @@ if __name__ == "__main__":
 
 
         # setup wall
-        map_lines = generate_wall_lines(ctx)
-        print('BEFORE')
+        if args.track:
+            map_lines = generate_auto_walls(ctx)
+        else:
+            map_lines = generate_wall_lines(ctx)
         landmark_lines = generate_landmark_lines(ctx)
-        print("LINES GENERATED")
 
         # setup FastSLAM instance
         fastSlam = FastSLAM(ctx, x, y, theta, motion_model, map_lines)
@@ -179,8 +182,10 @@ if __name__ == "__main__":
 
         # setup initial state
         state = State.STRAIGHT1
+        fsm = FSM(ctx["X1"], ctx["X2"])
         pos = fastSlam.compute_MC_expected_position()
-        move = FSM_actions(state)
+        move = fsm.actions(state)
+        print("STATE:", state)
         print("MOVE:", move)
 
         # log initial state
@@ -216,14 +221,15 @@ if __name__ == "__main__":
             else:
                 z = create_observations(ctx, sensor_data)
             #loginfo(f"Z {repr(z)}")
-            #print_observations(z)
+            print_observations(z)
             i+=1
             fastSlam.run(auto_move_to_angle(move)/ctx["RATE"], z)
 
             # compute current position and get next move from FSM
             pos = fastSlam.compute_MC_expected_position()
-            state = FSM(state, pos)
-            move = FSM_actions(state)
+            state = fsm.next_state(state, pos)
+            move = fsm.actions(state)
+            print("STATE:", state)
             print("MOVE:", move)
 
             if isJetson:
