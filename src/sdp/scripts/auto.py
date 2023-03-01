@@ -38,10 +38,12 @@ class StraightPID(PIDController):
 
     def set_target(target):
         self.target = target
+        self.cum_error = 0
 
     def next(self, curr_value):
-        error = target - curr_value
+        error = self.target - curr_value
         return super().next(error)
+
 
 class FSM:
     def __init__(self, x1, x2):

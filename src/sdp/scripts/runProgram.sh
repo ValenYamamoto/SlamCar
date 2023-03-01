@@ -39,6 +39,11 @@ if $TEST ; then
 elif $AUTO ; then
 	TEST_FILENAME="$(pwd)/test_params/auto_case_$N.yaml"
 	echo $TEST_FILENAME > params_filename.txt
+	FLAGS=""
+
+	if [[ $N -ne 1]] ; then
+		FLAGS="-t"
+
 
 	if $JETSON ; then
 		rosrun sdp runAutoCase.py -y $TEST_FILENAME
