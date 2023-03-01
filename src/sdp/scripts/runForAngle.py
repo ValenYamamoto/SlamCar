@@ -59,6 +59,7 @@ if __name__ == "__main__":
     #rospy.sleep(1)
     input()
     signal.signal(signal.SIGINT, sigint_handler)
+    r = rospy.Rate(10)
     print("Starting Motors")
     start_angle_1 = gyro_value
     err = motor_control_client(20, 0)
@@ -66,9 +67,12 @@ if __name__ == "__main__":
     start_angle = gyro_value
     rospy.sleep(1)
     end_angle = gyro_value
+    while abs(gyro_value - start_angle_1) - 90 < 0:
+        r.sleep()
+    #rospy.sleep(2.5)
     print("Stopping Motors")
     print(end_angle - start_angle)
-    print(end_angle - start_angle_1)
+    print(gyro_value - start_angle_1)
     err = motor_control_client(0, 0)
     rospy.sleep(1)
     err = servo_control_client(100, SERVO_CHANNEL)
