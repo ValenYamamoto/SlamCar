@@ -10,7 +10,7 @@ def print_observations(z):
 
 class SLAMContext:
     constants = {
-        "Q": np.diag([3.0, np.deg2rad(0.75)]) ** 2,
+        "Q": np.diag([5.0, np.deg2rad(0.75)]) ** 2,
         "R": np.diag([1.0, np.deg2rad(0.5)]) ** 2,
         "DELTA": 1,
         "N_PARTICLES": 20,

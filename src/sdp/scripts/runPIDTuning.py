@@ -64,8 +64,8 @@ def tof_callback(data):
     sensor_data = data.sensor_data
 
 def generate_walls():
-    w1 = ParametricLine(np.array([[0],[0]]), np.array([[0], [300]]))
-    w2 = ParametricLine(np.array([[70],[0]]), np.array([[0], [300]]))
+    w1 = ParametricLine(np.array([[0],[0]]), np.array([[0], [287]]))
+    w2 = ParametricLine(np.array([[70],[0]]), np.array([[0], [287]]))
     return [w1, w2]
 
 def get_observation(ctx, wall_distance, map_lines, landmark_lines):
@@ -215,14 +215,14 @@ if __name__ == "__main__":
         if isJetson:
             i = 0
             while i==0:
-                move_jetson(20, auto_move_to_angle(move))
+                move_jetson(20, 0)
                 i+= 1
                 r.sleep()
 
         pid_result = 0
         i = 1
         # Run for a set number of cycles in case something goes wrong. 200/5 = ~40 secs
-        while i < 30:
+        while i < 19:
             if not isJetson:
                 update_position(ctx, Moves.FORWARD, pid_result)
                 print(f"POSITION x: {ctx['x']} y: {ctx['y']} theta: {ctx['theta']}")
@@ -232,18 +232,24 @@ if __name__ == "__main__":
             #loginfo(f"Z {repr(z)}")
             print_observations(z)
             i+=1
-            fastSlam.run(pid_result, z)
+            fastSlam.run(pid_result/ctx['RATE'], z)
 
             # compute current position and get next move from FSM
             pos = fastSlam.compute_MC_expected_position()
             pid_result = straightPID.next(pos[0,0])
+            
+            if pid_result > np.deg2rad(40):
+                pid_result = np.deg2rad(40)
+            if pid_result < np.deg2rad(-40):
+                pid_result = np.deg2rad(-40)
 
             if isJetson:
-                move_jetson(20, auto_move_to_angle(pid_result))
+                move_jetson(20, pid_result)
                 #move_jetson(20, auto_move_to_angle(move))
 
                 # Exit condition for jetson
-                if z.size > 0 and (sensor_data[2] < 11 or sensor_data[3] < 11): 
+                if z.size > 0 and (0 < sensor_data[2] < 11 or 0 < sensor_data[3] < 11): 
+                    print("EXIT CONDITION HIT", sensor_data[2], sensor_data[3])
                     break
             else:
                 # Exit condition for simulation

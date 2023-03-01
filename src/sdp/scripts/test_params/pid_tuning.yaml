@@ -6,7 +6,7 @@ LM_THRESH: 10
 RANGE: 100
 N_LANDMARKS: 0
 RATE: 5
-x: 50 
+x: 20 
 y: 10
 theta: 0 
 SEED: 0

@@ -329,10 +329,12 @@ def log_particles(particles, socket=False):
     mc = calculate_mc_estimate(particles)
     iw = calculate_importance_weight_mc(particles)
     if isJetson:
+        """
         for i, particle in enumerate(particles):
             rospy.loginfo(
                 f"Particle {i}: {particle.x():.2f} {particle.y():.2f} {particle.orientation():.2f} {particle.old_weight:2f} {particle.landmarks[0]}"
             )
+        """
         rospy.loginfo(f"MCEst: {mc}")
         rospy.loginfo(f"IWEst: {iw}")
     else:
@@ -363,7 +365,12 @@ def scale_servo_angle(angle):
 
 def turn_to_servo_angle(phi):
     """ phi is in radians"""
-    return round(180.49955056 * phi + 101.42095328055964)
+    x = round(180.49955056 * phi + 101.42095328055964)
+    if x < 0:
+        return 0
+    elif x > 180:
+        return 180
+    return x
     
 
 def create_observations(ctx, sensor_data):
