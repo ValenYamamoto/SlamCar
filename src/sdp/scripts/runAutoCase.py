@@ -8,7 +8,7 @@ import traceback
 
 import numpy as np
 
-from auto import FSM, State, auto_move_to_angle
+from auto import FSM, FSMSimple, State, auto_move_to_angle
 from slam import FastSLAM, SLAMContext, motion_model
 from utils import (
     Moves,
@@ -182,7 +182,10 @@ if __name__ == "__main__":
 
         # setup initial state
         state = State.STRAIGHT1
-        fsm = FSM(ctx["X1"], ctx["X2"])
+        if args.track:
+            fsm = FSM(ctx["X1"], ctx["X2"])
+        else:
+            fsm = FSMSimple()
         pos = fastSlam.compute_MC_expected_position()
         move = fsm.actions(state)
         print("STATE:", state)

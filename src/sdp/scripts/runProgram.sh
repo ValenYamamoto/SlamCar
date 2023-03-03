@@ -41,17 +41,18 @@ elif $AUTO ; then
 	echo $TEST_FILENAME > params_filename.txt
 	FLAGS=""
 
-	if [[ $N -ne 1]] ; then
+	if [[ $N -ne 1 ]] ; then
 		FLAGS="-t"
+	fi
 
 
 	if $JETSON ; then
-		rosrun sdp runAutoCase.py -y $TEST_FILENAME
+		rosrun sdp runAutoCase.py -y $TEST_FILENAME $FLAGS
 	else
 		if $SIMULATION ; then
-			python3 runAutoCase.py -y $TEST_FILENAME -s
+			python3 runAutoCase.py -y $TEST_FILENAME -s $FLAGS
 		else
-			python3 runAutoCase.py -y $TEST_FILENAME 
+			python3 runAutoCase.py -y $TEST_FILENAME $FLAGS
 		fi
 	fi
 fi

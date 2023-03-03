@@ -103,6 +103,33 @@ class FSM:
         else:
             return Moves.LEFT
 
+class FSMSimple:
+    def __init__(self):
+        self.turn_start = 0
+
+    def next_state(self, state, pos):
+        if state == State.STRAIGHT1:
+            if pos[1] >= 90:
+                self.turn_start = 0
+                return State.TURN1
+            return State.STRAIGHT1
+
+        if state == State.TURN1:
+            delta = pos[2] - self.turn_start
+            if delta >= np.deg2rad(-90):
+                return State.TURN1
+            return State.STRAIGHT2
+
+        if state == State.STRAIGHT2:
+            return State.STRAIGHT2
+
+
+    def actions(self, state):
+        if state in [State.STRAIGHT1, State.STRAIGHT2, State.STRAIGHT3, State.STRAIGHT4]:
+            return Moves.FORWARD
+        else:
+            return Moves.LEFT
+
 def auto_move_to_angle(move):
     if move == Moves.FORWARD:
         return 0
