@@ -3,7 +3,8 @@ SIMULATION=false
 JETSON=false
 TEST=false
 AUTO=false
-while getopts 'n:sjta' opt; do
+PID=false
+while getopts 'n:sjtap' opt; do
 	case "$opt" in
 		n)
 		  N=$OPTARG
@@ -19,6 +20,9 @@ while getopts 'n:sjta' opt; do
 		  ;;
 		a)
 		  AUTO=true
+		  ;;
+		p)
+		  PID=true
 		  ;;
 	esac
 done
@@ -44,6 +48,10 @@ elif $AUTO ; then
 	if [[ $N -ne 1 ]] ; then
 		FLAGS="-t"
 	fi
+
+    if $PID ; then
+        FLAGS=$FLAGS" -p"
+    fi
 
 
 	if $JETSON ; then

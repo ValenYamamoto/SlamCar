@@ -424,6 +424,10 @@ def move_to_angle(move):
         return np.deg2rad(20)
 
 def move_jetson(motor_speed, turn_angle):
-    err = motor_control_client(motor_speed, 0)
-    err = servo_control_client(turn_to_servo_angle(-turn_angle), SERVO_CHANNEL)
+    if abs(turn_angle) == 35:
+        err = servo_control_client(180, SERVO_CHANNEL)
+    else:
+        err = servo_control_client(turn_to_servo_angle(-turn_angle), SERVO_CHANNEL)
+        
+    err = motor_control_client(abs(motor_speed), motor_speed < 0)
 

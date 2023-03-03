@@ -8,7 +8,7 @@ import traceback
 
 import numpy as np
 
-from auto import FSM, FSMSimple, State, auto_move_to_angle
+from auto import FSM, FSMSimple, State, auto_move_to_angle, StraightPID
 from slam import FastSLAM, SLAMContext, motion_model
 from utils import (
     Moves,
@@ -52,6 +52,8 @@ SPD_STEP = 5
 SERVO_CHANNEL = 15
 
 WALL_DISTANCE = 100
+
+P, I, D = 0.01, 0, 0.05
 
 sensor_data = None
 
@@ -126,6 +128,7 @@ if __name__ == "__main__":
     parser.add_argument("-y", "--yaml", default="")
     parser.add_argument("-s", "--simulation", action='store_true')
     parser.add_argument("-t", "--track", action='store_true')
+    parser.add_argument("-p", "--pid", action='store_true')
     args = parser.parse_args()
 
     socket = DashboardSocket(True, HOST, PORT)
@@ -177,6 +180,9 @@ if __name__ == "__main__":
         # setup FastSLAM instance
         fastSlam = FastSLAM(ctx, x, y, theta, motion_model, map_lines)
 
+        # setup PID
+        straightPID = StraightPID(P, I, D, target=150)
+
         # get observation generator for simulation
         obs_generator = get_observation(ctx, x, map_lines, landmark_lines)
 
@@ -214,6 +220,8 @@ if __name__ == "__main__":
                 move_jetson(20, auto_move_to_angle(move))
                 i+= 1
                 r.sleep()
+
+        pid_result = 0
         i = 1
         # Run for a set number of cycles in case something goes wrong. 200/5 = ~40 secs
         while i < 200:
@@ -226,20 +234,46 @@ if __name__ == "__main__":
             #loginfo(f"Z {repr(z)}")
             print_observations(z)
             i+=1
-            fastSlam.run(auto_move_to_angle(move)/ctx["RATE"], z)
+
+            if args.pid:
+                if state is not State.TURN1:
+                    fastSlam.run(pid_result/ctx["RATE"], z)
+                else:
+                    fastSlam.run(auto_move_to_angle(move)/ctx["RATE"], z)
+            else:
+                fastSlam.run(auto_move_to_angle(move)/ctx["RATE"], z)
 
             # compute current position and get next move from FSM
             pos = fastSlam.compute_MC_expected_position()
+            last_state = state
             state = fsm.next_state(state, pos)
+            if last_state != state:
+                straightPID.set_target(fsm.get_pid_target(state))
             move = fsm.actions(state)
+            if args.pid:
+                if state == State.STRAIGHT1:
+                    pid_result = straightPID.next(pos[0,0])
+                elif state == State.STRAIGHT2:
+                    pid_result = straightPID.next(pos[1,0])
+            
+                if pid_result > np.deg2rad(40):
+                    pid_result = np.deg2rad(40)
+                if pid_result < np.deg2rad(-40):
+                    pid_result = np.deg2rad(-40)
+                print("PID Result:", pid_result, pos[0,0], pos[1,0])
+
             print("STATE:", state)
             print("MOVE:", move)
 
             if isJetson:
-                move_jetson(20, auto_move_to_angle(move))
+                if args.pid and state is not State.TURN1:
+                    move_jetson(20, pid_result)
+                else:
+                    move_jetson(20, auto_move_to_angle(move))
 
                 # Exit condition for jetson
-                if z.size > 0 and (sensor_data[2] < 11 or sensor_data[3] < 11): 
+                if z.size > 0 and (0< sensor_data[2] < 40 or 0 < sensor_data[3] < 40): 
+                    print("Exit Condition Hit")
                     break
             else:
                 # Exit condition for simulation
@@ -260,6 +294,8 @@ if __name__ == "__main__":
                 if not args.simulation:
                     input("press to continue")
             print()
+        #move_jetson(-20, 0)
+        r.sleep()
         move_jetson(0, 0)
         if not args.simulation and isJetson:
             end = time.perf_counter_ns()

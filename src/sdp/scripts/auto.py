@@ -36,7 +36,7 @@ class StraightPID(PIDController):
         super().__init__(p, i, d)
         self.target = target
 
-    def set_target(target):
+    def set_target(self, target):
         self.target = target
         self.cum_error = 0
 
@@ -129,6 +129,13 @@ class FSMSimple:
             return Moves.FORWARD
         else:
             return Moves.LEFT
+
+    def get_pid_target(self, state):
+        if state == State.STRAIGHT1:
+            return 150
+        if state == State.STRAIGHT2:
+            return 150
+        return 0
 
 def auto_move_to_angle(move):
     if move == Moves.FORWARD:
