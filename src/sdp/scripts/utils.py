@@ -265,12 +265,10 @@ def generate_wall_lines(ctx):
 def generate_landmark_lines(ctx):
     walls = []
     for i in range(len(ctx["LANDMARK_X"])):
-        print("HI1")
         bot_x = ctx["LANDMARK_X"][i] - ctx["LANDMARK_R"]
         bot_y = ctx["LANDMARK_Y"][i] - ctx["LANDMARK_R"]
         top_x = ctx["LANDMARK_X"][i] + ctx["LANDMARK_R"]
         top_y = ctx["LANDMARK_Y"][i] + ctx["LANDMARK_R"]
-        print("HI")
         r = ctx["LANDMARK_R"] * 2
 
         start = np.array([[bot_x], [bot_y]])

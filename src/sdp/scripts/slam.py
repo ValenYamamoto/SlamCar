@@ -10,8 +10,8 @@ def print_observations(z):
 
 class SLAMContext:
     constants = {
-        "Q": np.diag([5.0, np.deg2rad(0.75)]) ** 2,
-        "R": np.diag([1.0, np.deg2rad(0.5)]) ** 2,
+        "Q": np.diag([2.5, np.deg2rad(0.75)]) ** 2,
+        "R": np.diag([1, np.deg2rad(2.5)]) ** 2,
         "DELTA": 1,
         "N_PARTICLES": 20,
         "N_LANDMARKS": 2,
@@ -102,6 +102,12 @@ class FastSLAM:
         y = total_y / self.ctx["N_PARTICLES"]
         o = total_orientation / self.ctx["N_PARTICLES"]
         return np.array([[x, y, o]]).T
+
+    def compute_MC_landmarks(self):
+        total = np.zeros((2, 1))
+        for particle in self.particles:
+            total += particle.landmarks[0].mu
+        return total / self.ctx["N_PARTICLES"]
 
     def compute_weight(self, particle: Particle, z: np.array, Q: np.array) -> float:
         """
@@ -321,6 +327,7 @@ class FastSLAM:
 
         if np.any(z):
             z_map, z_landmark = self.feature_extraction(z)
+            #print("EXTRACTED", z, z_landmark)
             #print("POST FEATURE EXTRACT", *self.particles[0].landmarks)
 
             n_feature_obs = 0
@@ -419,7 +426,7 @@ class FastSLAM:
                     abs(self.particles[i].landmarks[landmark_idx].mu[0]) <= 0.01
                 ):  # if landmark does not exist yet
                     #print("ADDING NEW LANDMARK ************************************")
-                    #print(landmark_idx, self.particles[i].landmarks[landmark_idx].mu[0])
+                    #print(z[:, iz])
                     self.particles[i] = self.add_new_landmark(
                         self.particles[i], z[:, iz], self.ctx["Q"]
                     )  # add landmark
