@@ -53,7 +53,7 @@ SERVO_CHANNEL = 15
 
 WALL_DISTANCE = 100
 
-P, I, D = 0.01, 0, 0.05
+P, I, D = 0.05, 0, 0.05
 
 sensor_data = None
 
@@ -181,7 +181,7 @@ if __name__ == "__main__":
         fastSlam = FastSLAM(ctx, x, y, theta, motion_model, map_lines)
 
         # setup PID
-        straightPID = StraightPID(P, I, D, target=150)
+        straightPID = StraightPID(P, I, D, target=250)
 
         # get observation generator for simulation
         obs_generator = get_observation(ctx, x, map_lines, landmark_lines)
@@ -247,7 +247,7 @@ if __name__ == "__main__":
             pos = fastSlam.compute_MC_expected_position()
             last_state = state
             state = fsm.next_state(state, pos)
-            if last_state != state:
+            if args.pid and last_state != state:
                 straightPID.set_target(fsm.get_pid_target(state))
             move = fsm.actions(state)
             if args.pid:
@@ -255,18 +255,22 @@ if __name__ == "__main__":
                     pid_result = straightPID.next(pos[0,0])
                 elif state == State.STRAIGHT2:
                     pid_result = straightPID.next(pos[1,0])
+                elif state == State.STRAIGHT3:
+                    pid_result = straightPID.next(pos[0,0])
+                elif state == State.STRAIGHT4:
+                    pid_result = straightPID.next(pos[1,0])
             
                 if pid_result > np.deg2rad(40):
                     pid_result = np.deg2rad(40)
                 if pid_result < np.deg2rad(-40):
                     pid_result = np.deg2rad(-40)
-                print("PID Result:", pid_result, pos[0,0], pos[1,0])
+                print("PID Result:", pid_result, straightPID.target, pos[0,0], pos[1,0])
 
             print("STATE:", state)
             print("MOVE:", move)
 
             if isJetson:
-                if args.pid and state is not State.TURN1:
+                if args.pid and state not in [State.TURN1, State.TURN2, State.TURN3, State.TURN4]:
                     move_jetson(20, pid_result)
                 else:
                     move_jetson(20, auto_move_to_angle(move))

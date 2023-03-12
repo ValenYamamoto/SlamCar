@@ -42,6 +42,7 @@ class StraightPID(PIDController):
 
     def next(self, curr_value):
         error = self.target - curr_value
+        print("PID error", error)
         return super().next(error)
 
 
@@ -53,7 +54,7 @@ class FSM:
 
     def next_state(self, state, pos):
         if state == State.STRAIGHT1:
-            if pos[1] >= self.x2 - 110:
+            if pos[1] >= self.x2 - 135:
                 self.turn_start = 0
                 return State.TURN1
             return State.STRAIGHT1
@@ -65,7 +66,7 @@ class FSM:
             return State.STRAIGHT2
 
         if state == State.STRAIGHT2:
-            if pos[0] <= 110:
+            if pos[0] <= 135:
                 return State.TURN2
             return State.STRAIGHT2
 
@@ -75,7 +76,7 @@ class FSM:
             return State.STRAIGHT3
 
         if state == State.STRAIGHT3:
-            if pos[1] <= 110:
+            if pos[1] <= 135:
                 self.turn_start = np.deg2rad(180)
                 return State.TURN3
             return State.STRAIGHT3
@@ -87,7 +88,7 @@ class FSM:
             return State.STRAIGHT4
 
         if state == State.STRAIGHT4:
-            if pos[0] >= self.x1 - 110:
+            if pos[0] >= self.x1 - 135:
                 return State.TURN4
             return State.STRAIGHT4
 
@@ -102,6 +103,17 @@ class FSM:
             return Moves.FORWARD
         else:
             return Moves.LEFT
+
+    def get_pid_target(self, state):
+        if state == State.STRAIGHT1:
+            return 250
+        if state == State.STRAIGHT2:
+            return 250
+        if state == State.STRAIGHT3:
+            return 50
+        if state == State.STRAIGHT4:
+            return 50
+        return 0
 
 class FSMSimple:
     def __init__(self):
